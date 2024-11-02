@@ -1,0 +1,28 @@
+name: Auto Number Test Case ID
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  auto-number:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Test Case Issues
+        if: github.event.issue.title == 'New Test Case'
+        id: check
+        run: |
+          echo "Identifying the latest test case number..."
+
+      - name: Update Issue Title
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueNumber = context.issue.number;
+            const customID = `TC-${issueNumber.toString().padStart(3, '0')}`; // Format as TC-001, TC-002, etc.
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              title: `${customID}: ${context.payload.issue.title}`
+            });
