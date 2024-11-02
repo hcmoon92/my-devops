@@ -1,13 +1,13 @@
 ---
 name: "Unit Test Case"
 about: "Create a new unit test case"
-title: "[Unit Test] <Feature Name>: <Test Case Name>"
+title: "[Unit Test] <Feature Name>: UT-{{ GitHub issue number }}"
 labels: ["unit-test", "test-case"]
 assignees: ""
 ---
 
 ### Test Case ID
-UT-001
+UT-{{ GitHub issue number }}
 
 ### Test Case
 **Description**: Check the login form validation functionality.
