@@ -1,0 +1,16 @@
+version: "3"
+services:
+  novnc:
+    image: hcmoon92/devops:ubuntu-desktop-lxde-vnc-node16-code-git-v0.5
+    # henry/ubuntu
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - USER=henry
+      - VNC_PASSWORD=tta123!@
+    ports:
+      - "6080:80"
+      - "5900:5900"
+    volumes:
+      - ./:/app
+      - /dev/shm:/dev/shm

@@ -1,0 +1,15 @@
+# Usage: docker-compose up -d
+version: "3"
+
+services:
+  svc:
+    build: ./build
+    privileged: true  # for usb connection
+    volumes:
+      - ./work:/work
+      - /dev/shm:/dev/shm
+      - /dev/bus/usb:/dev/bus/usb
+    ports:
+      - "5901:5901"
+      - "4723:4723"
+    stop_grace_period: 5s

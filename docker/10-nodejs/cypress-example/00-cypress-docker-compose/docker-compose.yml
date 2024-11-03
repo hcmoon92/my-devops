@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  app:
+    image: node:12-alpine
+    volumes:
+      - ./cypress-heroes-app:/app
+    command: sh -c "cd /app && npm install && npm start"
+    ports:
+      - "8080:8080"
+
+  cypress:
+    image: cypress/browsers:node14.16.0-chrome89-ff86
+    depends_on:
+      - app
+    environment:
+      - CYPRESS_baseUrl=http://app:8080
+    volumes:
+      - ./e2e:/e2e
+    command: sh -c "cd /e2e && npm install && npm run cypress:run"

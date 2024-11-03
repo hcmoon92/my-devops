@@ -1,0 +1,10 @@
+# Usage: docker-compose up -d
+version: "3"
+
+services:
+  rpi:
+    build: .
+    privileged: true
+    volumes:
+      - /dev:/dev 
+      - /lib/modules:/lib/modules

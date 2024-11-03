@@ -1,0 +1,9 @@
+# Usage: docker-compose up -d
+version: "3"
+
+services:
+  ros2:
+    build: ./build
+    ports:
+      - 6080:80
+      - 5900:5900

@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  cypress:
+    image: cypress/browsers:latest
+    environment:
+      - CYPRESS_baseUrl=http://localhost:8080
+    ports:
+      - "5901:5901"
+      - "6901:6901"
+    command: ["npm", "run", "cy:run"]
+
+  app:
+    build: ../cypress-example-kitchensink
+    ports:
+      - "8080:8080"
