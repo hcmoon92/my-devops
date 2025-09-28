@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client - Hover Reveal Sidebar</title>
+    <title>Web CLI Client - Overlay Sidebar</title>
     <style>
         /* Global Setup */
         body {
@@ -25,42 +25,52 @@
             max-width: 1400px;
             display: flex;
             flex-grow: 1;
+            /* 🚩 핵심 1: 절대 위치 기준점 설정 */
+            position: relative; 
             background-color: #ffffff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
-            /* 마우스가 Wrapper를 벗어나도 펼침 상태를 유지하지 않도록 focus-within 대신 hover 사용 */
         }
         
-        /* --- History Left Pane Styles (기본 숨김/축소 상태) --- */
+        /* --- Main Content Right Pane Styles (항상 전체 공간 차지) --- */
+        .main-content {
+            flex-grow: 1; /* 🚩 핵심 2: 남은 모든 공간을 차지 */
+            display: flex;
+            flex-direction: column;
+            /* 메인 컨텐츠가 사이드바 뒤에 깔리도록 낮은 z-index 설정 (필요시) */
+            z-index: 5; 
+        }
+        
+        /* --- History Left Pane Styles (Overlay/Absolute Position) --- */
         .history-sidebar {
-            /* 🚩 핵심: 기본 너비를 작게 (또는 0) 설정하고 transition 적용 */
-            width: 50px; 
+            /* 🚩 핵심 3: 레이아웃 흐름에서 벗어나고, 왼쪽 상단에 위치 */
+            position: absolute; 
+            top: 0;
+            left: 0;
+            height: 100%; /* 전체 높이 차지 */
+            
+            /* 🚩 핵심 4: 기본 숨김/축소 상태 (translateX로 밀어 넣음) */
+            width: 260px; /* 고정 너비 */
+            min-width: 260px;
             background-color: #f7f7fa; 
             padding: 10px 0;
-            overflow: hidden; /* 확장 전에는 내용 숨김 */
-            flex-shrink: 0; 
-            min-width: 50px; /* 축소 상태의 최소 너비 */
-            max-width: 260px; /* 최대 확장 너비 */
-            transition: width 0.3s ease-in-out; /* 부드러운 전환 효과 */
-            z-index: 10; /* 메인 컨텐츠 위에 있도록 설정 */
-            position: relative;
+            overflow: hidden;
+            
+            /* 기본 상태: 축소 및 숨김 (padding-left만 노출) */
+            transform: translateX(-220px); 
+            /* 260px (너비) - 40px (보여줄 아이콘/헤더의 너비) = 220px */
+            
+            transition: transform 0.3s ease-in-out; 
+            z-index: 10; /* 메인 컨텐츠 위에 덮어쓰도록 설정 */
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* 그림자 추가로 덮는 느낌 강조 */
         }
         
-        /* 🚩 핵심: 마우스 오버 시 사이드바 확장 */
+        /* 🚩 핵심 5: 마우스 오버 시 전체 노출 */
         .cli-wrapper:hover .history-sidebar {
-            width: 260px; 
-            overflow-y: auto; /* 확장 시 스크롤 허용 */
+            transform: translateX(0); /* 원래 위치로 이동하여 펼침 */
+            overflow-y: auto;
         }
-        
-        /* --- 사이드바 내부 스타일 (축소/확장 시 모두 표시되도록 조정) --- */
-        .sidebar-header {
-            padding: 10px 20px;
-            font-size: 1.1em;
-            font-weight: 700;
-            color: #333333;
-            border-bottom: 1px solid #eeeeee;
-            margin-bottom: 10px;
-            white-space: nowrap;
-        }
+
+        /* 🚩 New Chat Button이 펼쳐진 상태에서만 보이도록 조정 */
         #new-chat-button {
             width: 90%;
             margin: 0 5% 15px 5%;
@@ -73,17 +83,38 @@
             cursor: pointer;
             transition: background-color 0.2s;
             white-space: nowrap;
+            opacity: 0; /* 기본적으로 숨김 */
+            transition: opacity 0.3s 0.1s; /* 펼쳐진 후 약간의 지연 후 표시 */
         }
-        #new-chat-button:hover {
-            background-color: #d0d0d0;
+        .cli-wrapper:hover #new-chat-button {
+            opacity: 1; 
         }
 
+        /* 🚩 Sidebar Header 스타일 조정 (아이콘처럼 보이도록) */
+        .sidebar-header {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #333333;
+            border-bottom: 1px solid #eeeeee;
+            margin-bottom: 10px;
+            white-space: nowrap;
+            /* 축소 시에도 '💬' 아이콘이 보이도록 left padding은 유지 */
+        }
+        
+        /* 🚩 History List 항목 스타일 조정 (펼침 시에만 내용 보이도록) */
         .history-list {
             list-style: none;
             padding: 10px 10px;
             margin: 0;
             white-space: nowrap;
+            opacity: 0; /* 기본적으로 숨김 */
+            transition: opacity 0.3s 0.1s;
         }
+        .cli-wrapper:hover .history-list {
+             opacity: 1; 
+        }
+        
         .history-list li {
             padding: 10px 15px;
             margin-bottom: 5px;
@@ -99,14 +130,6 @@
         .history-list li.active { background-color: #e0e0e0; font-weight: 600; color: #333333; }
         /* ---------------------------------- */
 
-        /* Command Right Pane Styles (자동 확장) */
-        .main-content {
-            flex-grow: 1; 
-            display: flex;
-            flex-direction: column;
-            z-index: 5;
-        }
-        
         /* 기타 스타일 유지 */
         .output { flex-grow: 1; padding: 20px 40px; overflow-y: auto; line-height: 1.8; display: flex; flex-direction: column; align-items: center; background-color: #ffffff; }
         .output-item { max-width: 800px; width: 100%; padding: 15px 0; }
@@ -122,14 +145,6 @@
 </head>
 <body>
     <div class="cli-wrapper">
-        <div class="history-sidebar" id="history-sidebar">
-            <div class="sidebar-header">
-                💬 Chat History
-            </div>
-            <button id="new-chat-button">➕ New Chat</button>
-            <ul class="history-list" id="history-list">
-                </ul>
-        </div>
         
                 <div class="main-content">
             <div id="output" class="output">
@@ -141,10 +156,19 @@
                 </div>
             </div>
         </div>
+        
+        <div class="history-sidebar" id="history-sidebar">
+            <div class="sidebar-header">
+                💬 Chat History
+            </div>
+            <button id="new-chat-button">➕ New Chat</button>
+            <ul class="history-list" id="history-list">
+                </ul>
+        </div>
     </div>
 
     <script>
-        // --- JavaScript (세션 관리 로직은 이전과 동일하게 유지됩니다.) ---
+        // --- JavaScript (세션 관리 및 대화 로직은 이전과 동일하게 유지됩니다.) ---
         const outputDiv = document.getElementById('output');
         const input = document.getElementById('command-input');
         const sendButton = document.getElementById('send-button');
@@ -167,7 +191,7 @@
                 outputItem.innerHTML = `<div class="system-response" style="border-left: 3px solid #007bff; color: #007bff; background-color: #e6f7ff;">${item.text}</div>`;
             } else if (item.type === 'user') {
                 outputItem.innerHTML = `<div><span class="user-input">&gt; ${item.text}</span></div>`;
-            } else { // system_response or processing
+            } else { 
                 const responseBlock = document.createElement('div');
                 responseBlock.className = 'system-response';
                 
@@ -235,7 +259,6 @@
             if (activeSessionId !== null && currentCommands.length > 0) {
                 const sessionToUpdate = allSessions.find(s => s.id === activeSessionId);
                 if (sessionToUpdate) {
-                    // 세션의 제목과 명령어 목록 업데이트
                     const firstUserCommand = sessionToUpdate.conversation.find(item => item.type === 'user');
                     if(firstUserCommand) {
                         sessionToUpdate.title = firstUserCommand.text.substring(0, 30) + (firstUserCommand.text.length > 30 ? '...' : '');
@@ -244,7 +267,6 @@
                 }
             }
             
-            // 새 세션 생성
             const newSession = {
                 id: currentSessionId++,
                 title: 'New Chat',
@@ -257,7 +279,6 @@
             currentCommands = newSession.commands;
             commandIndex = 0;
             
-            // UI 초기화 및 시작 메시지 출력
             outputDiv.innerHTML = '';
             input.value = '';
             const welcomeMsg = {type: 'system_welcome', text: 'Welcome to the new chat session. Type your first command.'};
@@ -289,17 +310,12 @@
 
             try {
                 // API 호출 시뮬레이션
-                // 실제 API 호출 로직은 여기에 위치합니다.
                 const data = {
                     status: 'success',
                     message: 'Command executed successfully.',
                     output: 'This is the simulated output for your command: ' + command 
                 };
                 
-                // const response = await fetch('/api/send_command', { /* ... */ });
-                // const data = await response.json();
-
-               
                 loadingElement.remove();
                 currentSession.conversation.pop();
 
@@ -314,7 +330,6 @@
                 currentSession.conversation.push(responseMsg);
                 appendMessage(responseMsg);
                 
-                // 첫 응답 후 세션 제목 업데이트
                 if (currentSession.title === 'New Chat') {
                     currentSession.title = command.substring(0, 30) + (command.length > 30 ? '...' : '');
                     updateHistorySidebar();
