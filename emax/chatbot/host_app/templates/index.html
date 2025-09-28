@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Web CLI Client with History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c2f33;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .cli-wrapper {
+            width: 90%;
+            max-width: 1200px; /* 전체 너비 확장 */
+            height: 600px; /* 고정 높이 */
+            background-color: #23272a;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            display: flex; /* Flexbox로 사이드바와 메인 컨텐츠 분할 */
+            overflow: hidden;
+        }
+        
+        /* --- History Sidebar Styles --- */
+        .history-sidebar {
+            width: 250px; /* 사이드바 너비 */
+            background-color: #1f2326; /* 메인과 구분되는 더 어두운 색 */
+            padding: 15px 0;
+            border-right: 1px solid #2f363c;
+            overflow-y: auto;
+        }
+        .history-sidebar h3 {
+            font-size: 1.1em;
+            margin: 0 15px 10px 15px;
+            color: #7289da;
+            border-bottom: 1px solid #40444b;
+            padding-bottom: 5px;
+        }
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .history-list li {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            cursor: pointer;
+            white-space: nowrap; /* 줄바꿈 방지 */
+            overflow: hidden;
+            text-overflow: ellipsis; /* 넘치는 텍스트 ... 처리 */
+        }
+        .history-list li:hover {
+            background-color: #36393f; /* 호버 시 색상 변경 */
+        }
+        .history-list li:nth-last-child(1) {
+             font-weight: bold; /* 마지막 실행 명령어 강조 */
+             color: #43b581; /* 성공색으로 강조 */
+        }
+        /* ---------------------------------- */
+
+        .main-content {
+            flex-grow: 1; /* 남은 공간을 메인 컨텐츠가 차지 */
+            display: flex;
+            flex-direction: column;
+        }
+        .output {
+            height: 100%; /* 부모 높이를 채우도록 변경 */
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #2f363c;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .input-area {
+            display: flex;
+            padding: 15px;
+            flex-shrink: 0; /* 높이가 줄어들지 않도록 */
+        }
+        .input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #40444b;
+            color: #ffffff;
+        }
+        .input-area button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #7289da;
+            color: #ffffff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="cli-wrapper">
+        <div class="history-sidebar">
+            <h3>Command History</h3>
+            <ul class="history-list" id="history-list">
+                </ul>
+        </div>
+        
+                <div class="main-content">
+            <div class="output" id="output">Welcome to the Web CLI Client. Type a command below.</div>
+            <div class="input-area">
+                <input type="text" id="command-input" placeholder="Type a command (e.g., hello, status, clone)">
+                <button id="send-button">Send</button>
+                <button id="clear-button" style="margin-left: 5px; background-color: #f04747;">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const outputDiv = document.getElementById('output');
+        const input = document.getElementById('command-input');
+        const sendButton = document.getElementById('send-button');
+        const clearButton = document.getElementById('clear-button');
+        const historyList = document.getElementById('history-list'); // 새로 추가된 엘리먼트
+        
+        // --- HISTORY VARIABLES ---
+        const history = [];
+        let historyIndex = 0; // history.length로 초기화하여 다음 입력 준비
+        // -------------------------
+
+        function appendMessage(text) {
+            outputDiv.innerHTML += text + '<br>';
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        /**
+         * History Sidebar를 업데이트합니다.
+         */
+        function updateHistorySidebar() {
+            historyList.innerHTML = ''; // 목록 초기화
+            history.forEach((command, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${command}`;
+                
+                // 클릭 시 입력창으로 명령어 로드
+                li.addEventListener('click', () => {
+                    input.value = command;
+                    input.focus();
+                    historyIndex = history.length; // 히스토리 인덱스 초기화
+                });
+                
+                historyList.appendChild(li);
+            });
+            // 스크롤을 맨 아래로 이동
+            historyList.scrollTop = historyList.scrollHeight;
+        }
+
+
+        async function sendCommand() {
+            const command = input.value.trim();
+            if (!command) return;
+            
+            // 1. History 저장 로직
+            const lastCommand = history[history.length - 1];
+            if (command && lastCommand !== command) {
+                history.push(command);
+                updateHistorySidebar(); // 사이드바 업데이트
+            }
+            // Reset history index
+            historyIndex = history.length; 
+
+            // Clear input field
+            input.value = '';
+
+            appendMessage(`> ${command}`);
+            appendMessage(`...Processing...`);
+
+            try {
+                const response = await fetch('/api/send_command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    appendMessage(`✅ SUCCESS: ${data.message}`);
+                    if (data.output) {
+                        appendMessage(data.output);
+                    }
+                } else {
+                    appendMessage(`❌ ERROR: ${data.message}`);
+                    if (data.output) {
+                        appendMessage(data.output);
+                    }
+                }
+            } catch (error) {
+                appendMessage(`❌ ERROR: Failed to connect to server.`);
+            }
+        }
+        
+        // --- Event Listeners ---
+        
+        sendButton.addEventListener('click', sendCommand);
+        clearButton.addEventListener('click', () => {
+            outputDiv.innerHTML = 'Console Cleared.<br>';
+            input.focus();
+        });
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                sendCommand();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    input.value = history[historyIndex];
+                }
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                
+                if (historyIndex < history.length - 1) {
+                    historyIndex++;
+                    input.value = history[historyIndex];
+                } else if (historyIndex === history.length - 1) {
+                    historyIndex++;
+                    input.value = ''; 
+                }
+            }
+        });
+    </script>
+</body>
+</html>
