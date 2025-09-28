@@ -7,7 +7,7 @@ app = Flask(__name__)
 ALLOWED_COMMANDS = {
     "hello": {"script": "my_script.py", "args": ["hello"]},
     "status": {"script": "my_script.py", "args": ["status"]},
-    "clone": {"script": "my_script.py", "args": ["clone_repo"]}
+    "image": {"script": "image.py", "args": ["help"]}
 }
 
 @app.route('/api/execute', methods=['POST'])
