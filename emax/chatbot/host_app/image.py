@@ -8,7 +8,7 @@ def main():
     command = sys.argv[1]
 
     if command == "make":
-        print("Hello from the host!")
+        print("Image Making...")
     elif command == "status":
         print("Host system status: OK")
     elif command == "clone_repo":
