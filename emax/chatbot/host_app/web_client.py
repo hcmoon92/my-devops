@@ -32,4 +32,5 @@ def send_command():
         }), 500
 
 if __name__ == '__main__':
-    app.run(port=8080)
+    # 0.0.0.0으로 변경하여 모든 IP에서 접근 가능하게 설정
+    app.run(host='0.0.0.0', port=8080)
