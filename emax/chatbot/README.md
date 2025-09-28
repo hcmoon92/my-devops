@@ -1,7 +1,7 @@
 Python 대시보드 챗봇을 위한 docker-compose.yml 예제는 아래와 같습니다. 이 예제는 일반적으로 Python 애플리케이션 컨테이너, Nginx 리버스 프록시 컨테이너, 그리고 PostgreSQL 데이터베이스 컨테이너를 포함합니다.
 
 docker-compose.yml 예제
-YAML
+```YAML
 
 version: '3.8'
 
@@ -41,6 +41,8 @@ services:
 
 volumes:
   postgres_data:
+```
+
 예제 설명
 app 서비스: Python 챗봇 애플리케이션을 위한 컨테이너입니다.
 
