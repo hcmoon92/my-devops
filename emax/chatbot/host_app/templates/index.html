@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client - Overlay Sidebar</title>
+    <title>Web CLI Client - Overlay Sidebar Reduced</title>
     <style>
         /* Global Setup */
         body {
@@ -19,58 +19,55 @@
             align-items: stretch;
         }
 
-        /* 🚩 Flexbox Main Wrapper */
+        /* 🚩 Flexbox Main Wrapper - Relative for Absolute positioning */
         .cli-wrapper {
             width: 100%;
             max-width: 1400px;
             display: flex;
             flex-grow: 1;
-            /* 🚩 핵심 1: 절대 위치 기준점 설정 */
             position: relative; 
             background-color: #ffffff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
         }
         
-        /* --- Main Content Right Pane Styles (항상 전체 공간 차지) --- */
+        /* --- Main Content Right Pane Styles (Always Full Width) --- */
         .main-content {
-            flex-grow: 1; /* 🚩 핵심 2: 남은 모든 공간을 차지 */
+            flex-grow: 1; /* 남은 모든 공간을 차지 */
             display: flex;
             flex-direction: column;
-            /* 메인 컨텐츠가 사이드바 뒤에 깔리도록 낮은 z-index 설정 (필요시) */
             z-index: 5; 
         }
         
         /* --- History Left Pane Styles (Overlay/Absolute Position) --- */
         .history-sidebar {
-            /* 🚩 핵심 3: 레이아웃 흐름에서 벗어나고, 왼쪽 상단에 위치 */
+            /* 🚩 핵심 1: 절대 위치로 메인 컨텐츠 위를 덮음 */
             position: absolute; 
             top: 0;
             left: 0;
-            height: 100%; /* 전체 높이 차지 */
+            height: 100%; 
             
-            /* 🚩 핵심 4: 기본 숨김/축소 상태 (translateX로 밀어 넣음) */
-            width: 260px; /* 고정 너비 */
-            min-width: 260px;
+            /* 🚩 핵심 2: 사이드바의 실제 너비 설정 (펼침 폭) */
+            width: 200px; 
+            min-width: 200px;
             background-color: #f7f7fa; 
             padding: 10px 0;
             overflow: hidden;
             
-            /* 기본 상태: 축소 및 숨김 (padding-left만 노출) */
-            transform: translateX(-220px); 
-            /* 260px (너비) - 40px (보여줄 아이콘/헤더의 너비) = 220px */
+            /* 🚩 핵심 3: 기본 상태 - 100px만 노출되도록 100px만큼 왼쪽으로 이동 */
+            transform: translateX(-100px); 
             
             transition: transform 0.3s ease-in-out; 
-            z-index: 10; /* 메인 컨텐츠 위에 덮어쓰도록 설정 */
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* 그림자 추가로 덮는 느낌 강조 */
+            z-index: 10; 
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); 
         }
         
-        /* 🚩 핵심 5: 마우스 오버 시 전체 노출 */
+        /* 🚩 핵심 4: 마우스 오버 시 - 원래 위치 (전체 200px) 노출 */
         .cli-wrapper:hover .history-sidebar {
-            transform: translateX(0); /* 원래 위치로 이동하여 펼침 */
+            transform: translateX(0); 
             overflow-y: auto;
         }
 
-        /* 🚩 New Chat Button이 펼쳐진 상태에서만 보이도록 조정 */
+        /* 🚩 New Chat Button (펼침 시에만 표시) */
         #new-chat-button {
             width: 90%;
             margin: 0 5% 15px 5%;
@@ -81,16 +78,15 @@
             border-radius: 20px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
             white-space: nowrap;
-            opacity: 0; /* 기본적으로 숨김 */
-            transition: opacity 0.3s 0.1s; /* 펼쳐진 후 약간의 지연 후 표시 */
+            opacity: 0; 
+            transition: opacity 0.3s 0.1s;
         }
         .cli-wrapper:hover #new-chat-button {
             opacity: 1; 
         }
 
-        /* 🚩 Sidebar Header 스타일 조정 (아이콘처럼 보이도록) */
+        /* 🚩 Sidebar Header 스타일 조정 */
         .sidebar-header {
             padding: 10px 20px;
             font-size: 1.1em;
@@ -108,29 +104,18 @@
             padding: 10px 10px;
             margin: 0;
             white-space: nowrap;
-            opacity: 0; /* 기본적으로 숨김 */
+            opacity: 0; 
             transition: opacity 0.3s 0.1s;
         }
         .cli-wrapper:hover .history-list {
              opacity: 1; 
         }
         
-        .history-list li {
-            padding: 10px 15px;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-            cursor: pointer;
-            border-radius: 4px; 
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: background-color 0.1s, color 0.1s;
-            color: #555555;
-        }
+        /* 기타 스타일 유지 */
+        .history-list li { padding: 10px 15px; margin-bottom: 5px; font-size: 0.9em; cursor: pointer; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.1s, color 0.1s; color: #555555; }
         .history-list li:hover { background-color: #e8e8f0; color: #333333; }
         .history-list li.active { background-color: #e0e0e0; font-weight: 600; color: #333333; }
-        /* ---------------------------------- */
 
-        /* 기타 스타일 유지 */
         .output { flex-grow: 1; padding: 20px 40px; overflow-y: auto; line-height: 1.8; display: flex; flex-direction: column; align-items: center; background-color: #ffffff; }
         .output-item { max-width: 800px; width: 100%; padding: 15px 0; }
         .output-item:not(:last-child) { border-bottom: 1px dotted #dddddd; }
@@ -174,7 +159,6 @@
         const sendButton = document.getElementById('send-button');
         const newChatButton = document.getElementById('new-chat-button');
         const historyList = document.getElementById('history-list');
-        const historySidebar = document.getElementById('history-sidebar');
 
         const allSessions = [];
         let currentSessionId = 0; 
