@@ -72,7 +72,7 @@ volumes: - postgres_data:/var/lib/postgresql/data: 데이터베이스 데이터�
 
 추가 구성 파일
 Dockerfile 예제
-Dockerfile
+```Dockerfile
 
 # 파이썬 기본 이미지를 사용
 FROM python:3.9-slim
@@ -89,11 +89,16 @@ COPY . .
 
 # 애플리케이션 실행 명령어
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "your_app_name:app"]
+```
+
 requirements.txt 예제
+```
 gunicorn
 flask # 또는 FastAPI, Django 등 사용하는 웹 프레임워크
 psycopg2-binary
+```
 nginx.conf 예제
+```
 Nginx
 
 server {
@@ -107,9 +112,12 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
+
+```
+
 실행 방법
 위의 파일들을 하나의 디렉터리에 저장합니다.
 
-docker-compose up --build -d 명령어를 실행하여 모든 컨테이너를 빌드하고 실행합니다.
+`docker-compose up --build -d` 명령어를 실행하여 모든 컨테이너를 빌드하고 실행합니다.
 
 웹 브라우저에서 http://localhost로 접속하여 대시보드 챗봇에 접근할 수 있습니다.
