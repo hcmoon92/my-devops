@@ -2,118 +2,154 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client with History</title>
+    <title>Web CLI Client - Chat Style</title>
     <style>
+        /* Global Reset and Setup */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #2c2f33;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a; /* Darker background */
             color: #ffffff;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .cli-wrapper {
-            width: 90%;
-            max-width: 1200px; /* 전체 너비 확장 */
-            height: 600px; /* 고정 높이 */
-            background-color: #23272a;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            display: flex; /* Flexbox로 사이드바와 메인 컨텐츠 분할 */
+            align-items: stretch; /* Stretch to fill viewport height */
+            height: 100vh;
+            width: 100vw;
             overflow: hidden;
         }
-        
-        /* --- History Sidebar Styles --- */
-        .history-sidebar {
-            width: 250px; /* 사이드바 너비 */
-            background-color: #1f2326; /* 메인과 구분되는 더 어두운 색 */
-            padding: 15px 0;
-            border-right: 1px solid #2f363c;
-            overflow-y: auto;
+
+        /* Main Layout Wrapper */
+        .cli-wrapper {
+            width: 100%;
+            max-width: 1400px; /* Wider view */
+            display: flex;
+            background-color: #24252b; /* Container background */
         }
-        .history-sidebar h3 {
-            font-size: 1.1em;
-            margin: 0 15px 10px 15px;
+        
+        /* --- History Sidebar Styles (Gemini Style) --- */
+        .history-sidebar {
+            width: 280px; 
+            background-color: #1e1e1e; /* Sidebar background */
+            padding: 10px 0;
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .sidebar-header {
+            padding: 10px 15px;
+            font-size: 1.2em;
+            font-weight: 600;
             color: #7289da;
-            border-bottom: 1px solid #40444b;
-            padding-bottom: 5px;
+            margin-bottom: 10px;
         }
         .history-list {
             list-style: none;
-            padding: 0;
+            padding: 0 10px;
             margin: 0;
         }
         .history-list li {
-            padding: 8px 15px;
+            padding: 10px 15px;
+            margin-bottom: 5px;
             font-size: 0.9em;
             cursor: pointer;
-            white-space: nowrap; /* 줄바꿈 방지 */
+            border-radius: 8px; /* Rounded corners for chat items */
+            white-space: nowrap; 
             overflow: hidden;
-            text-overflow: ellipsis; /* 넘치는 텍스트 ... 처리 */
+            text-overflow: ellipsis;
+            transition: background-color 0.2s;
         }
         .history-list li:hover {
-            background-color: #36393f; /* 호버 시 색상 변경 */
+            background-color: #33333a; 
         }
-        .history-list li:nth-last-child(1) {
-             font-weight: bold; /* 마지막 실행 명령어 강조 */
-             color: #43b581; /* 성공색으로 강조 */
+        .history-list li.active {
+            background-color: #3f51b5; /* Active/current chat color */
+            font-weight: bold;
         }
         /* ---------------------------------- */
 
+        /* Main Console/Chat Area */
         .main-content {
-            flex-grow: 1; /* 남은 공간을 메인 컨텐츠가 차지 */
+            flex-grow: 1; 
             display: flex;
             flex-direction: column;
+            padding-top: 20px;
         }
         .output {
-            height: 100%; /* 부모 높이를 채우도록 변경 */
-            padding: 20px;
+            flex-grow: 1; /* Allows output area to take up most of the space */
+            padding: 0 40px;
             overflow-y: auto;
-            border-bottom: 1px solid #2f363c;
             line-height: 1.6;
             white-space: pre-wrap;
+            /* Center content and limit max width for readability */
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
         }
+        .output-line {
+            max-width: 800px; 
+            width: 100%;
+            padding: 10px 0;
+            border-bottom: 1px dashed #333;
+        }
         .input-area {
             display: flex;
-            padding: 15px;
-            flex-shrink: 0; /* 높이가 줄어들지 않도록 */
+            padding: 20px;
+            flex-shrink: 0; 
+            justify-content: center;
         }
-        .input-area input {
+        .input-container {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            background-color: #33333a; 
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+        }
+        .input-container input {
             flex-grow: 1;
             padding: 10px;
             border: none;
-            border-radius: 4px;
-            background-color: #40444b;
+            background-color: transparent;
             color: #ffffff;
+            outline: none;
         }
-        .input-area button {
+        .input-container button {
             margin-left: 10px;
-            padding: 10px 20px;
+            padding: 10px 15px;
             border: none;
-            border-radius: 4px;
+            border-radius: 20px; 
             background-color: #7289da;
             color: #ffffff;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
+        .input-container button:hover {
+            background-color: #5b6fb8;
+        }
     </style>
 </head>
 <body>
     <div class="cli-wrapper">
         <div class="history-sidebar">
-            <h3>Command History</h3>
+            <div class="sidebar-header">
+                Web CLI Chat
+            </div>
             <ul class="history-list" id="history-list">
                 </ul>
         </div>
         
                 <div class="main-content">
-            <div class="output" id="output">Welcome to the Web CLI Client. Type a command below.</div>
+            <div id="output" class="output">
+                <div class="output-line">Welcome to the Web CLI Client. Type a command below.</div>
+            </div>
             <div class="input-area">
-                <input type="text" id="command-input" placeholder="Type a command (e.g., hello, status, clone)">
-                <button id="send-button">Send</button>
-                <button id="clear-button" style="margin-left: 5px; background-color: #f04747;">Clear</button>
+                <div class="input-container">
+                    <input type="text" id="command-input" placeholder="Enter a command...">
+                    <button id="send-button">Send</button>
+                    <button id="clear-button" style="background-color: #4a4a4a;">Clear</button>
+                </div>
             </div>
         </div>
     </div>
@@ -123,40 +159,69 @@
         const input = document.getElementById('command-input');
         const sendButton = document.getElementById('send-button');
         const clearButton = document.getElementById('clear-button');
-        const historyList = document.getElementById('history-list'); // 새로 추가된 엘리먼트
-        
+        const historyList = document.getElementById('history-list');
+
         // --- HISTORY VARIABLES ---
         const history = [];
-        let historyIndex = 0; // history.length로 초기화하여 다음 입력 준비
+        let historyIndex = 0;
         // -------------------------
 
-        function appendMessage(text) {
-            outputDiv.innerHTML += text + '<br>';
+        function appendMessage(text, isCommand = false) {
+            // Create a new line container
+            const line = document.createElement('div');
+            line.className = 'output-line';
+            
+            // Format the message content
+            const content = document.createElement('pre'); // Use pre for CLI formatting
+            content.style.whiteSpace = 'pre-wrap';
+            
+            if (isCommand) {
+                // Style for user input
+                content.innerHTML = `&gt; <span style="font-weight: bold; color: #4CAF50;">${text}</span>`;
+            } else if (text.startsWith('✅ SUCCESS')) {
+                 // Style for success
+                content.innerHTML = `<span style="color: #4CAF50;">${text}</span>`;
+            } else if (text.startsWith('❌ ERROR')) {
+                 // Style for error
+                content.innerHTML = `<span style="color: #F44336;">${text}</span>`;
+            } else if (text.startsWith('...Processing...')) {
+                content.innerHTML = `<span style="color: #9E9E9E;">${text}</span>`;
+            } else {
+                content.innerHTML = text;
+            }
+            
+            line.appendChild(content);
+            outputDiv.appendChild(line);
             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
 
-        /**
-         * History Sidebar를 업데이트합니다.
-         */
         function updateHistorySidebar() {
-            historyList.innerHTML = ''; // 목록 초기화
-            history.forEach((command, index) => {
+            historyList.innerHTML = '';
+            // Only show the last N commands (e.g., 20) for a cleaner history list
+            const displayHistory = history.slice(-20); 
+
+            displayHistory.forEach((command, index) => {
                 const li = document.createElement('li');
-                li.textContent = `${index + 1}. ${command}`;
+                // Use the first few words as the title
+                li.textContent = command.substring(0, 30) + (command.length > 30 ? '...' : ''); 
                 
-                // 클릭 시 입력창으로 명령어 로드
+                // Set the last item as active (to simulate the current conversation)
+                if (index === displayHistory.length - 1) {
+                    li.classList.add('active');
+                }
+                
                 li.addEventListener('click', () => {
                     input.value = command;
                     input.focus();
-                    historyIndex = history.length; // 히스토리 인덱스 초기화
+                    historyIndex = history.length;
+                    // Note: In a real chat app, clicking would load the entire conversation,
+                    // but here we just load the command for convenience.
                 });
                 
                 historyList.appendChild(li);
             });
-            // 스크롤을 맨 아래로 이동
             historyList.scrollTop = historyList.scrollHeight;
         }
-
 
         async function sendCommand() {
             const command = input.value.trim();
@@ -166,18 +231,22 @@
             const lastCommand = history[history.length - 1];
             if (command && lastCommand !== command) {
                 history.push(command);
-                updateHistorySidebar(); // 사이드바 업데이트
+                updateHistorySidebar(); 
             }
-            // Reset history index
             historyIndex = history.length; 
 
             // Clear input field
             input.value = '';
 
-            appendMessage(`> ${command}`);
+            appendMessage(command, true); // Display command as user input
             appendMessage(`...Processing...`);
 
             try {
+                // Removed the initial welcome message from the main output
+                if (outputDiv.children[0] && outputDiv.children[0].textContent.includes('Welcome')) {
+                    outputDiv.children[0].remove();
+                }
+
                 const response = await fetch('/api/send_command', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -185,7 +254,12 @@
                 });
 
                 const data = await response.json();
-                
+               
+                // Remove the '...Processing...' message
+                if (outputDiv.lastChild && outputDiv.lastChild.textContent.includes('Processing')) {
+                    outputDiv.lastChild.remove();
+                }
+
                 if (data.status === 'success') {
                     appendMessage(`✅ SUCCESS: ${data.message}`);
                     if (data.output) {
@@ -198,32 +272,35 @@
                     }
                 }
             } catch (error) {
+                // Remove the '...Processing...' message on error
+                if (outputDiv.lastChild && outputDiv.lastChild.textContent.includes('Processing')) {
+                    outputDiv.lastChild.remove();
+                }
                 appendMessage(`❌ ERROR: Failed to connect to server.`);
             }
         }
         
         // --- Event Listeners ---
-        
         sendButton.addEventListener('click', sendCommand);
+        
         clearButton.addEventListener('click', () => {
-            outputDiv.innerHTML = 'Console Cleared.<br>';
+            outputDiv.innerHTML = '<div class="output-line">Console Cleared.</div>';
             input.focus();
         });
 
         input.addEventListener('keydown', (event) => {
+            // History Navigation (ArrowUp/Down) and Enter logic
             if (event.key === 'Enter') {
                 event.preventDefault(); 
                 sendCommand();
             } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
-                
                 if (historyIndex > 0) {
                     historyIndex--;
                     input.value = history[historyIndex];
                 }
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault();
-                
                 if (historyIndex < history.length - 1) {
                     historyIndex++;
                     input.value = history[historyIndex];
