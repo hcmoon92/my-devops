@@ -17,7 +17,7 @@ ALLOWED_COMMANDS = {
     "status": {"script": "script_default.py", "base_args": ["status"]},
     # 🚩 추가: 'image' 명령어를 'analyze'로 변경하고, 파일 경로를 인수로 받도록 설정
     "analyze": {"script": "script_image.py", "base_args": ["analyze"]}, 
-    "image": {"script": "script_image.py", "base_args": ["make"]} # 기존 image 명령 유지 (파일 미사용 가정)
+    "make": {"script": "script_image.py", "base_args": ["make"]} # 기존 image 명령 유지 (파일 미사용 가정)
 }
 
 # 🚩 엔드포인트는 프록시 서버가 요청하는 /api/execute로 유지
