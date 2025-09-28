@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client - Resizable Chat</title>
+    <title>Web CLI Client - Flexbox Layout</title>
     <style>
         /* Global Setup */
         body {
@@ -11,18 +11,21 @@
             color: #333333;
             margin: 0;
             padding: 0;
+            /* 🚩 Flexbox 핵심 1: 전체 높이 확보 및 레이아웃 시작 */
             display: flex;
-            justify-content: center;
-            align-items: stretch;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
+            justify-content: center;
+            align-items: stretch;
         }
 
         .cli-wrapper {
             width: 100%;
             max-width: 1400px;
+            /* 🚩 Flexbox 핵심 2: 좌우 Pane을 가로로 정렬 */
             display: flex;
+            flex-grow: 1; /* body 내에서 남은 공간을 채웁니다. */
             background-color: #ffffff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
         }
@@ -38,146 +41,43 @@
             background-color: #dcdcdc;
         }
         
-        /* --- History Left Pane Styles --- */
+        /* --- History Left Pane Styles (고정 너비) --- */
         .history-sidebar {
-            width: 260px; /* Initial Width */
+            width: 260px; /* 초기 너비 */
             background-color: #f7f7fa; 
             padding: 10px 0;
             overflow-y: auto;
-            flex-shrink: 0;
-            min-width: 200px; /* Minimum width constraint */
-            max-width: 500px; /* Maximum width constraint */
+            flex-shrink: 0; /* 🚩 Flexbox 핵심 3: 사이드바가 줄어들지 않도록 고정 */
+            min-width: 200px; 
+            max-width: 500px; 
         }
-        .sidebar-header {
-            padding: 10px 20px;
-            font-size: 1.1em;
-            font-weight: 700;
-            color: #333333;
-            border-bottom: 1px solid #eeeeee;
-            margin-bottom: 10px;
-        }
-        #new-chat-button {
-            width: 90%;
-            margin: 0 5% 15px 5%;
-            padding: 10px;
-            background-color: #e0e0e0;
-            color: #333333;
-            border: none;
-            border-radius: 20px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        #new-chat-button:hover {
-            background-color: #d0d0d0;
-        }
-
-        .history-list {
-            list-style: none;
-            padding: 10px 10px;
-            margin: 0;
-        }
-        .history-list li {
-            padding: 10px 15px;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-            cursor: pointer;
-            border-radius: 4px; 
-            white-space: nowrap; 
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: background-color 0.1s, color 0.1s;
-            color: #555555;
-        }
-        .history-list li:hover {
-            background-color: #e8e8f0;
-            color: #333333;
-        }
-        .history-list li.active {
-            background-color: #e0e0e0;
-            font-weight: 600;
-            color: #333333;
-        }
-        /* ---------------------------------- */
-
-        /* Command Right Pane Styles (Chat Display) */
+        
+        /* --- Main Content Right Pane Styles (자동 확장) --- */
         .main-content {
+            /* 🚩 Flexbox 핵심 4: 남은 공간을 모두 차지하도록 설정 */
             flex-grow: 1; 
             display: flex;
             flex-direction: column;
         }
-        .output {
-            flex-grow: 1; 
-            padding: 20px 40px;
-            overflow-y: auto;
-            line-height: 1.8;
-            display: flex;
-            flex-direction: column;
-            align-items: center; 
-            background-color: #ffffff;
-        }
-        .output-item {
-            max-width: 800px; 
-            width: 100%;
-            padding: 15px 0;
-        }
-        .output-item:not(:last-child) {
-             border-bottom: 1px dotted #dddddd;
-        }
-        .user-input {
-            font-weight: 700;
-            color: #007bff;
-        }
-        .system-response {
-            background-color: #f7f7fa; 
-            padding: 10px;
-            border-left: 3px solid #6c757d;
-            margin-top: 5px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            color: #555;
-            font-size: 0.95em;
-        }
-        
-        .input-area {
-            display: flex;
-            padding: 20px;
-            flex-shrink: 0; 
-            justify-content: center;
-            border-top: 1px solid #eeeeee;
-            background-color: #ffffff;
-        }
-        .input-container {
-            display: flex;
-            width: 100%;
-            max-width: 800px;
-            background-color: #ffffff; 
-            border: 1px solid #cccccc;
-            border-radius: 8px;
-            padding: 8px 15px;
-        }
-        .input-container input {
-            flex-grow: 1;
-            padding: 5px 0;
-            border: none;
-            background-color: transparent;
-            color: #333333;
-            outline: none;
-        }
-        .input-container button {
-            margin-left: 10px;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px; 
-            background-color: #007bff;
-            color: #ffffff;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-        .input-container button:hover {
-            background-color: #0056b3;
-        }
+        
+        /* --- 기타 스타일 유지 (생략 가능, 전체 코드는 하단 참조) --- */
+        .sidebar-header { padding: 10px 20px; font-size: 1.1em; font-weight: 700; color: #333333; border-bottom: 1px solid #eeeeee; margin-bottom: 10px; }
+        #new-chat-button { width: 90%; margin: 0 5% 15px 5%; padding: 10px; background-color: #e0e0e0; color: #333333; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        #new-chat-button:hover { background-color: #d0d0d0; }
+        .history-list { list-style: none; padding: 10px 10px; margin: 0; }
+        .history-list li { padding: 10px 15px; margin-bottom: 5px; font-size: 0.9em; cursor: pointer; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.1s, color 0.1s; color: #555555; }
+        .history-list li:hover { background-color: #e8e8f0; color: #333333; }
+        .history-list li.active { background-color: #e0e0e0; font-weight: 600; color: #333333; }
+        .output { flex-grow: 1; padding: 20px 40px; overflow-y: auto; line-height: 1.8; display: flex; flex-direction: column; align-items: center; background-color: #ffffff; }
+        .output-item { max-width: 800px; width: 100%; padding: 15px 0; }
+        .output-item:not(:last-child) { border-bottom: 1px dotted #dddddd; }
+        .user-input { font-weight: 700; color: #007bff; }
+        .system-response { background-color: #f7f7fa; padding: 10px; border-left: 3px solid #6c757d; margin-top: 5px; font-family: monospace; white-space: pre-wrap; color: #555; font-size: 0.95em; }
+        .input-area { display: flex; padding: 20px; flex-shrink: 0; justify-content: center; border-top: 1px solid #eeeeee; background-color: #ffffff; }
+        .input-container { display: flex; width: 100%; max-width: 800px; background-color: #ffffff; border: 1px solid #cccccc; border-radius: 8px; padding: 8px 15px; }
+        .input-container input { flex-grow: 1; padding: 5px 0; border: none; background-color: transparent; color: #333333; outline: none; }
+        .input-container button { margin-left: 10px; padding: 8px 15px; border: none; border-radius: 4px; background-color: #007bff; color: #ffffff; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }
+        .input-container button:hover { background-color: #0056b3; }
     </style>
 </head>
 <body>
@@ -206,6 +106,7 @@
     </div>
 
     <script>
+        // JavaScript (세션 관리 및 리사이저 로직은 이전과 동일하게 유지됩니다.)
         const outputDiv = document.getElementById('output');
         const input = document.getElementById('command-input');
         const sendButton = document.getElementById('send-button');
@@ -213,21 +114,12 @@
         const historyList = document.getElementById('history-list');
         const historySidebar = document.getElementById('history-sidebar');
 
-        // --- SESSION AND COMMAND VARIABLES ---
-        // { id: number, title: string, commands: string[], conversation: {type: 'user'/'system', text: string}[] }
         const allSessions = [];
         let currentSessionId = 0; 
-        let currentCommands = []; // 화살표 키 탐색용
+        let currentCommands = []; 
         let commandIndex = 0;
-        let activeSessionId = null; // 현재 화면에 표시되는 세션 ID
+        let activeSessionId = null;
 
-        // -------------------------
-
-        // --- CORE CHAT DISPLAY FUNCTIONS ---
-
-        /**
-         * 채팅 메시지를 출력 창에 추가합니다. (객체를 DOM으로 렌더링)
-         */
         function appendMessage(item, targetDiv) {
             const container = targetDiv || outputDiv;
             const outputItem = document.createElement('div');
@@ -256,12 +148,9 @@
 
             container.appendChild(outputItem);
             container.scrollTop = container.scrollHeight;
-            return outputItem; // 로딩 메시지 제거를 위해 반환
+            return outputItem;
         }
 
-        /**
-         * 세션 히스토리 목록을 업데이트합니다.
-         */
         function updateHistorySidebar() {
             historyList.innerHTML = '';
             
@@ -280,51 +169,38 @@
                 
                 historyList.appendChild(li);
             });
-            // 새 세션이 추가될 때마다 목록을 맨 위로 스크롤하여 최신 세션 표시
             historyList.scrollTop = 0; 
         }
 
-        /**
-         * 특정 세션 ID에 해당하는 대화 내용을 메인 창에 로드합니다.
-         */
         function loadSession(sessionId) {
             const session = allSessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            outputDiv.innerHTML = ''; // 기존 내용 삭제
+            outputDiv.innerHTML = '';
             
-            // 대화 내용을 순회하며 출력
             session.conversation.forEach(item => {
                 appendMessage(item);
             });
             
-            // 현재 활성 세션 업데이트 및 UI 반영
             activeSessionId = sessionId;
-            currentCommands = session.commands || []; // 화살표 키 탐색을 위해 명령어 로드
+            currentCommands = session.commands || [];
             commandIndex = currentCommands.length;
             input.value = '';
             input.focus();
             
-            // 사이드바 active 클래스 업데이트
             document.querySelectorAll('.history-list li').forEach(item => item.classList.remove('active'));
             document.querySelector(`[data-session-id="${sessionId}"]`).classList.add('active');
         }
 
-        /**
-         * 새로운 대화 세션을 시작합니다.
-         */
         function startNewChat() {
-            // 현재 진행 중인 세션이 있다면 저장
             if (activeSessionId !== null && currentCommands.length > 0) {
                 const sessionToUpdate = allSessions.find(s => s.id === activeSessionId);
                 if (sessionToUpdate) {
-                    // 세션의 제목과 명령어 목록만 업데이트 (대화 내용은 이미 저장되어 있음)
                     sessionToUpdate.title = sessionToUpdate.conversation[0].text.substring(0, 30) + (sessionToUpdate.conversation[0].text.length > 30 ? '...' : '');
                     sessionToUpdate.commands = currentCommands;
                 }
             }
             
-            // 새 세션 생성 및 초기화
             const newSession = {
                 id: currentSessionId++,
                 title: 'New Chat',
@@ -337,7 +213,6 @@
             currentCommands = newSession.commands;
             commandIndex = 0;
             
-            // UI 초기화 및 시작 메시지 출력
             outputDiv.innerHTML = '';
             input.value = '';
             const welcomeMsg = {type: 'system_welcome', text: 'Welcome to the new chat session. Type your first command.'};
@@ -348,7 +223,6 @@
             input.focus();
         }
 
-        // --- RESIZER FUNCTIONALITY ---
         function setupResizer() {
             const resizer = document.getElementById('resizer');
             const cliWrapper = document.querySelector('.cli-wrapper');
@@ -367,7 +241,6 @@
                 const wrapperRect = cliWrapper.getBoundingClientRect();
                 const newWidth = e.clientX - wrapperRect.left;
                 
-                // CSS min/max-width를 사용하여 경계를 설정
                 if (newWidth >= 200 && newWidth <= 500) {
                     historySidebar.style.width = newWidth + 'px';
                 }
@@ -381,7 +254,6 @@
                 }
             });
         }
-        // -----------------------------
 
         async function sendCommand() {
             const command = input.value.trim();
@@ -390,23 +262,19 @@
             const currentSession = allSessions.find(s => s.id === activeSessionId);
             if (!currentSession) return;
 
-            // 1. 명령어 히스토리에 추가
             currentCommands.push(command);
             commandIndex = currentCommands.length; 
             
-            // 2. 사용자 입력 출력 및 세션에 저장
             input.value = '';
             const userMsg = {type: 'user', text: command};
             currentSession.conversation.push(userMsg);
             appendMessage(userMsg); 
             
-            // 3. 로딩 메시지 출력 및 세션에 저장
             const loadingMsg = {type: 'system_response', text: '...Processing...'};
             currentSession.conversation.push(loadingMsg);
             let loadingElement = appendMessage(loadingMsg); 
 
             try {
-                // API 호출 로직
                 const response = await fetch('/api/send_command', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -415,11 +283,9 @@
 
                 const data = await response.json();
                
-                // 4. 로딩 메시지 제거
                 loadingElement.remove();
-                currentSession.conversation.pop(); // 세션에서도 로딩 메시지 제거
+                currentSession.conversation.pop();
 
-                // 5. 응답 조합 및 출력/저장
                 let fullResponse = data.message;
                 if (data.output) {
                     fullResponse += "\n\n" + data.output;
@@ -431,14 +297,12 @@
                 currentSession.conversation.push(responseMsg);
                 appendMessage(responseMsg);
                 
-                // 첫 응답 후 세션 제목 업데이트
-                if (currentSession.conversation.length === 2) { // 웰컴 메시지(1) + 사용자 입력(1) + 시스템 응답(1)이므로, 세션 길이가 3이 되어야 함.
+                if (currentSession.conversation.length === 3) {
                     currentSession.title = command.substring(0, 30) + (command.length > 30 ? '...' : '');
-                    updateHistorySidebar(); // 제목이 바뀌었으므로 사이드바 업데이트
+                    updateHistorySidebar();
                 }
 
             } catch (error) {
-                // 4. 로딩 메시지 제거 및 에러 응답 출력/저장
                 loadingElement.remove();
                 currentSession.conversation.pop();
 
@@ -448,8 +312,7 @@
             }
         }
         
-        // --- Event Listeners ---
-        sendButton.addEventListener('click', sendCommand);
+        sendButton.addEventListener('click', sendCommand);
         newChatButton.addEventListener('click', startNewChat);
 
         input.addEventListener('keydown', (event) => {
@@ -471,7 +334,6 @@
             }
         });
 
-        // 초기화
         startNewChat();
         setupResizer();
     </script>
