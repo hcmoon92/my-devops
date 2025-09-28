@@ -2,12 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client - Markdown Style</title>
+    <title>Web CLI Client - History Pane</title>
     <style>
-        /* Global Reset and Setup - Brighter, cleaner look */
+        /* Global Reset and Setup */
         body {
             font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f4f4f7; /* Light gray background */
+            background-color: #f4f4f7; 
             color: #333333;
             margin: 0;
             padding: 0;
@@ -24,16 +24,16 @@
             width: 100%;
             max-width: 1400px;
             display: flex;
-            background-color: #ffffff; /* White background for the main container */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Soft shadow */
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
         }
         
-        /* --- History Sidebar Styles (Markdown/Minimal Look) --- */
+        /* --- History Left Pane Styles --- */
         .history-sidebar {
             width: 260px; 
-            background-color: #f7f7fa; /* Slightly darker than main background */
+            background-color: #f7f7fa; 
             padding: 10px 0;
-            border-right: 1px solid #eeeeee; /* Minimal divider */
+            border-right: 1px solid #eeeeee;
             overflow-y: auto;
             flex-shrink: 0;
         }
@@ -59,20 +59,20 @@
             overflow: hidden;
             text-overflow: ellipsis;
             transition: background-color 0.1s, color 0.1s;
-            color: #555555; /* Less prominent text color */
+            color: #555555;
         }
         .history-list li:hover {
-            background-color: #e8e8f0; /* Light hover effect */
+            background-color: #e8e8f0;
             color: #333333;
         }
         .history-list li.active {
-            background-color: #e0e0e0; /* Active item background */
+            background-color: #e0e0e0;
             font-weight: 600;
             color: #333333;
         }
         /* ---------------------------------- */
 
-        /* Main Console/Chat Area */
+        /* Command Right Pane Styles */
         .main-content {
             flex-grow: 1; 
             display: flex;
@@ -82,25 +82,24 @@
             flex-grow: 1; 
             padding: 20px 40px;
             overflow-y: auto;
-            line-height: 1.8; /* Increased line height for readability */
+            line-height: 1.8;
             display: flex;
             flex-direction: column;
             align-items: center; 
-            background-color: #ffffff; /* Ensure white background for content */
+            background-color: #ffffff;
         }
         .output-line {
             max-width: 800px; 
             width: 100%;
             padding: 15px 0;
-            border-bottom: 1px dotted #dddddd; /* Dotted line separator */
+            border-bottom: 1px dotted #dddddd;
             color: #333;
             font-size: 1.05em;
         }
-        /* Style for response/code block look */
         .output-response {
-            background-color: #f7f7fa; /* Light background for output to resemble code block */
+            background-color: #f7f7fa; 
             padding: 10px;
-            border-left: 3px solid #6c757d; /* Sidebar indicator like blockquote/code */
+            border-left: 3px solid #6c757d;
             margin-top: 5px;
             font-family: monospace;
             white-space: pre-wrap;
@@ -113,7 +112,7 @@
             padding: 20px;
             flex-shrink: 0; 
             justify-content: center;
-            border-top: 1px solid #eeeeee; /* Divider */
+            border-top: 1px solid #eeeeee;
             background-color: #ffffff;
         }
         .input-container {
@@ -121,7 +120,7 @@
             width: 100%;
             max-width: 800px;
             background-color: #ffffff; 
-            border: 1px solid #cccccc; /* Simple border */
+            border: 1px solid #cccccc;
             border-radius: 8px;
             padding: 8px 15px;
         }
@@ -138,7 +137,7 @@
             padding: 8px 15px;
             border: none;
             border-radius: 4px; 
-            background-color: #007bff; /* Primary blue button */
+            background-color: #007bff;
             color: #ffffff;
             cursor: pointer;
             font-weight: 500;
@@ -192,16 +191,13 @@
             line.className = 'output-line';
             
             if (isCommand) {
-                // Command input: bolded and prefixed with '>'
                 const content = document.createElement('pre');
                 content.innerHTML = `&gt; <span style="font-weight: 700;">${text}</span>`;
                 line.appendChild(content);
             } else {
-                // Response (Markdown-like block)
                 const responseBlock = document.createElement('div');
                 responseBlock.className = 'output-response';
                 
-                // Simple color logic for status messages
                 let displayHtml = text;
                 if (text.startsWith('✅ SUCCESS')) {
                     displayHtml = `<span style="color: #28a745;">${text}</span>`;
@@ -219,6 +215,9 @@
             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
 
+        /**
+         * History Sidebar를 업데이트하고 클릭 이벤트를 설정합니다.
+         */
         function updateHistorySidebar() {
             historyList.innerHTML = '';
             const displayHistory = history.slice(-20); 
@@ -228,18 +227,28 @@
                 // Use the first few words as the title
                 li.textContent = command.substring(0, 35) + (command.length > 35 ? '...' : ''); 
                 
-                // Set the last item as active
+                // Set the last item as active (가장 최근에 실행된 명령어)
                 if (index === displayHistory.length - 1) {
                     li.classList.add('active');
                 } else {
                     li.classList.remove('active');
                 }
                 
+                // --- 핵심 변경: 클릭 이벤트 설정 ---
                 li.addEventListener('click', () => {
+                    // 1. 입력창에 명령어 로드
                     input.value = command;
                     input.focus();
-                    historyIndex = history.length;
+                    
+                    // 2. historyIndex를 현재 클릭된 위치로 설정
+                    //   -> 화살표 키로 탐색할 때 자연스럽게 이어지도록 합니다.
+                    historyIndex = history.length - displayHistory.length + index;
+                    
+                    // 3. (선택적) 모든 항목에서 active 클래스를 제거하고 클릭된 항목에만 추가
+                    document.querySelectorAll('.history-list li').forEach(item => item.classList.remove('active'));
+                    li.classList.add('active');
                 });
+                // ------------------------------------
                 
                 historyList.appendChild(li);
             });
@@ -281,7 +290,7 @@
                     lastChild.remove();
                 }
 
-                // Concatenate message and optional output for a single response block
+                // Combine message and optional output
                 let fullResponse = data.message;
                 if (data.output) {
                     fullResponse += "\n\n" + data.output;
@@ -294,7 +303,6 @@
                 }
                 
             } catch (error) {
-                // Find and remove the '...Processing...' message on network error
                 let lastChild = outputDiv.lastChild;
                 if (lastChild && lastChild.querySelector('.output-response') && lastChild.querySelector('.output-response').textContent.includes('Processing')) {
                     lastChild.remove();
@@ -317,10 +325,12 @@
                 sendCommand();
             } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
+                // Arrow key logic remains the same
                 if (historyIndex > 0) {
                     historyIndex--;
                     input.value = history[historyIndex];
                 }
+                // (Optional) 사이드바의 active 클래스를 현재 historyIndex에 해당하는 항목으로 변경하는 로직을 추가할 수 있습니다.
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault();
                 if (historyIndex < history.length - 1) {
@@ -330,6 +340,7 @@
                     historyIndex++;
                     input.value = ''; 
                 }
+                // (Optional) 사이드바의 active 클래스를 현재 historyIndex에 해당하는 항목으로 변경하는 로직을 추가할 수 있습니다.
             }
         });
     </script>
