@@ -2,18 +2,18 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client - Chat Style</title>
+    <title>Web CLI Client - Markdown Style</title>
     <style>
-        /* Global Reset and Setup */
+        /* Global Reset and Setup - Brighter, cleaner look */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a; /* Darker background */
-            color: #ffffff;
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f7; /* Light gray background */
+            color: #333333;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: stretch; /* Stretch to fill viewport height */
+            align-items: stretch;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -22,26 +22,27 @@
         /* Main Layout Wrapper */
         .cli-wrapper {
             width: 100%;
-            max-width: 1400px; /* Wider view */
+            max-width: 1400px;
             display: flex;
-            background-color: #24252b; /* Container background */
+            background-color: #ffffff; /* White background for the main container */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Soft shadow */
         }
         
-        /* --- History Sidebar Styles (Gemini Style) --- */
+        /* --- History Sidebar Styles (Markdown/Minimal Look) --- */
         .history-sidebar {
-            width: 280px; 
-            background-color: #1e1e1e; /* Sidebar background */
+            width: 260px; 
+            background-color: #f7f7fa; /* Slightly darker than main background */
             padding: 10px 0;
-            border-right: 1px solid #333;
+            border-right: 1px solid #eeeeee; /* Minimal divider */
             overflow-y: auto;
             flex-shrink: 0;
         }
         .sidebar-header {
-            padding: 10px 15px;
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #7289da;
-            margin-bottom: 10px;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #333333;
+            border-bottom: 1px solid #eeeeee;
         }
         .history-list {
             list-style: none;
@@ -53,18 +54,21 @@
             margin-bottom: 5px;
             font-size: 0.9em;
             cursor: pointer;
-            border-radius: 8px; /* Rounded corners for chat items */
+            border-radius: 4px; 
             white-space: nowrap; 
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: background-color 0.2s;
+            transition: background-color 0.1s, color 0.1s;
+            color: #555555; /* Less prominent text color */
         }
         .history-list li:hover {
-            background-color: #33333a; 
+            background-color: #e8e8f0; /* Light hover effect */
+            color: #333333;
         }
         .history-list li.active {
-            background-color: #3f51b5; /* Active/current chat color */
-            font-weight: bold;
+            background-color: #e0e0e0; /* Active item background */
+            font-weight: 600;
+            color: #333333;
         }
         /* ---------------------------------- */
 
@@ -73,60 +77,75 @@
             flex-grow: 1; 
             display: flex;
             flex-direction: column;
-            padding-top: 20px;
         }
         .output {
-            flex-grow: 1; /* Allows output area to take up most of the space */
-            padding: 0 40px;
+            flex-grow: 1; 
+            padding: 20px 40px;
             overflow-y: auto;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            /* Center content and limit max width for readability */
+            line-height: 1.8; /* Increased line height for readability */
             display: flex;
             flex-direction: column;
             align-items: center; 
+            background-color: #ffffff; /* Ensure white background for content */
         }
         .output-line {
             max-width: 800px; 
             width: 100%;
-            padding: 10px 0;
-            border-bottom: 1px dashed #333;
+            padding: 15px 0;
+            border-bottom: 1px dotted #dddddd; /* Dotted line separator */
+            color: #333;
+            font-size: 1.05em;
         }
+        /* Style for response/code block look */
+        .output-response {
+            background-color: #f7f7fa; /* Light background for output to resemble code block */
+            padding: 10px;
+            border-left: 3px solid #6c757d; /* Sidebar indicator like blockquote/code */
+            margin-top: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: #555;
+            font-size: 0.95em;
+        }
+        
         .input-area {
             display: flex;
             padding: 20px;
             flex-shrink: 0; 
             justify-content: center;
+            border-top: 1px solid #eeeeee; /* Divider */
+            background-color: #ffffff;
         }
         .input-container {
             display: flex;
             width: 100%;
             max-width: 800px;
-            background-color: #33333a; 
-            border-radius: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            padding: 5px 15px;
+            background-color: #ffffff; 
+            border: 1px solid #cccccc; /* Simple border */
+            border-radius: 8px;
+            padding: 8px 15px;
         }
         .input-container input {
             flex-grow: 1;
-            padding: 10px;
+            padding: 5px 0;
             border: none;
             background-color: transparent;
-            color: #ffffff;
+            color: #333333;
             outline: none;
         }
         .input-container button {
             margin-left: 10px;
-            padding: 10px 15px;
+            padding: 8px 15px;
             border: none;
-            border-radius: 20px; 
-            background-color: #7289da;
+            border-radius: 4px; 
+            background-color: #007bff; /* Primary blue button */
             color: #ffffff;
             cursor: pointer;
+            font-weight: 500;
             transition: background-color 0.2s;
         }
         .input-container button:hover {
-            background-color: #5b6fb8;
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -134,7 +153,7 @@
     <div class="cli-wrapper">
         <div class="history-sidebar">
             <div class="sidebar-header">
-                Web CLI Chat
+                📝 Command History
             </div>
             <ul class="history-list" id="history-list">
                 </ul>
@@ -142,13 +161,15 @@
         
                 <div class="main-content">
             <div id="output" class="output">
-                <div class="output-line">Welcome to the Web CLI Client. Type a command below.</div>
+                <div class="output-line">
+                    <pre>Welcome to the Web CLI Client. Type a command below.</pre>
+                </div>
             </div>
             <div class="input-area">
                 <div class="input-container">
-                    <input type="text" id="command-input" placeholder="Enter a command...">
+                    <input type="text" id="command-input" placeholder="Type command here...">
                     <button id="send-button">Send</button>
-                    <button id="clear-button" style="background-color: #4a4a4a;">Clear</button>
+                    <button id="clear-button" style="background-color: #6c757d;">Clear</button>
                 </div>
             </div>
         </div>
@@ -167,55 +188,57 @@
         // -------------------------
 
         function appendMessage(text, isCommand = false) {
-            // Create a new line container
             const line = document.createElement('div');
             line.className = 'output-line';
             
-            // Format the message content
-            const content = document.createElement('pre'); // Use pre for CLI formatting
-            content.style.whiteSpace = 'pre-wrap';
-            
             if (isCommand) {
-                // Style for user input
-                content.innerHTML = `&gt; <span style="font-weight: bold; color: #4CAF50;">${text}</span>`;
-            } else if (text.startsWith('✅ SUCCESS')) {
-                 // Style for success
-                content.innerHTML = `<span style="color: #4CAF50;">${text}</span>`;
-            } else if (text.startsWith('❌ ERROR')) {
-                 // Style for error
-                content.innerHTML = `<span style="color: #F44336;">${text}</span>`;
-            } else if (text.startsWith('...Processing...')) {
-                content.innerHTML = `<span style="color: #9E9E9E;">${text}</span>`;
+                // Command input: bolded and prefixed with '>'
+                const content = document.createElement('pre');
+                content.innerHTML = `&gt; <span style="font-weight: 700;">${text}</span>`;
+                line.appendChild(content);
             } else {
-                content.innerHTML = text;
+                // Response (Markdown-like block)
+                const responseBlock = document.createElement('div');
+                responseBlock.className = 'output-response';
+                
+                // Simple color logic for status messages
+                let displayHtml = text;
+                if (text.startsWith('✅ SUCCESS')) {
+                    displayHtml = `<span style="color: #28a745;">${text}</span>`;
+                } else if (text.startsWith('❌ ERROR')) {
+                    displayHtml = `<span style="color: #dc3545;">${text}</span>`;
+                } else if (text.startsWith('...Processing...')) {
+                    displayHtml = `<span style="color: #999;">${text}</span>`;
+                }
+                
+                responseBlock.innerHTML = displayHtml;
+                line.appendChild(responseBlock);
             }
-            
-            line.appendChild(content);
+
             outputDiv.appendChild(line);
             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
 
         function updateHistorySidebar() {
             historyList.innerHTML = '';
-            // Only show the last N commands (e.g., 20) for a cleaner history list
             const displayHistory = history.slice(-20); 
 
             displayHistory.forEach((command, index) => {
                 const li = document.createElement('li');
                 // Use the first few words as the title
-                li.textContent = command.substring(0, 30) + (command.length > 30 ? '...' : ''); 
+                li.textContent = command.substring(0, 35) + (command.length > 35 ? '...' : ''); 
                 
-                // Set the last item as active (to simulate the current conversation)
+                // Set the last item as active
                 if (index === displayHistory.length - 1) {
                     li.classList.add('active');
+                } else {
+                    li.classList.remove('active');
                 }
                 
                 li.addEventListener('click', () => {
                     input.value = command;
                     input.focus();
                     historyIndex = history.length;
-                    // Note: In a real chat app, clicking would load the entire conversation,
-                    // but here we just load the command for convenience.
                 });
                 
                 historyList.appendChild(li);
@@ -227,7 +250,6 @@
             const command = input.value.trim();
             if (!command) return;
             
-            // 1. History 저장 로직
             const lastCommand = history[history.length - 1];
             if (command && lastCommand !== command) {
                 history.push(command);
@@ -235,14 +257,12 @@
             }
             historyIndex = history.length; 
 
-            // Clear input field
             input.value = '';
 
-            appendMessage(command, true); // Display command as user input
+            appendMessage(command, true);
             appendMessage(`...Processing...`);
 
             try {
-                // Removed the initial welcome message from the main output
                 if (outputDiv.children[0] && outputDiv.children[0].textContent.includes('Welcome')) {
                     outputDiv.children[0].remove();
                 }
@@ -255,26 +275,29 @@
 
                 const data = await response.json();
                
-                // Remove the '...Processing...' message
-                if (outputDiv.lastChild && outputDiv.lastChild.textContent.includes('Processing')) {
-                    outputDiv.lastChild.remove();
+                // Find and remove the '...Processing...' message
+                let lastChild = outputDiv.lastChild;
+                if (lastChild && lastChild.querySelector('.output-response') && lastChild.querySelector('.output-response').textContent.includes('Processing')) {
+                    lastChild.remove();
                 }
 
-                if (data.status === 'success') {
-                    appendMessage(`✅ SUCCESS: ${data.message}`);
-                    if (data.output) {
-                        appendMessage(data.output);
-                    }
+                // Concatenate message and optional output for a single response block
+                let fullResponse = data.message;
+                if (data.output) {
+                    fullResponse += "\n\n" + data.output;
+                }
+               
+                if (data.status === 'success') {
+                    appendMessage(`✅ SUCCESS: ${fullResponse}`);
                 } else {
-                    appendMessage(`❌ ERROR: ${data.message}`);
-                    if (data.output) {
-                        appendMessage(data.output);
-                    }
+                    appendMessage(`❌ ERROR: ${fullResponse}`);
                 }
+                
             } catch (error) {
-                // Remove the '...Processing...' message on error
-                if (outputDiv.lastChild && outputDiv.lastChild.textContent.includes('Processing')) {
-                    outputDiv.lastChild.remove();
+                // Find and remove the '...Processing...' message on network error
+                let lastChild = outputDiv.lastChild;
+                if (lastChild && lastChild.querySelector('.output-response') && lastChild.querySelector('.output-response').textContent.includes('Processing')) {
+                    lastChild.remove();
                 }
                 appendMessage(`❌ ERROR: Failed to connect to server.`);
             }
@@ -284,12 +307,11 @@
         sendButton.addEventListener('click', sendCommand);
         
         clearButton.addEventListener('click', () => {
-            outputDiv.innerHTML = '<div class="output-line">Console Cleared.</div>';
+            outputDiv.innerHTML = '<div class="output-line"><pre>Console Cleared.</pre></div>';
             input.focus();
         });
 
         input.addEventListener('keydown', (event) => {
-            // History Navigation (ArrowUp/Down) and Enter logic
             if (event.key === 'Enter') {
                 event.preventDefault(); 
                 sendCommand();
