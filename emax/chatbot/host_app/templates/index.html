@@ -2,9 +2,9 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client - History Pane</title>
+    <title>Web CLI Client - Gemini Chat Style</title>
     <style>
-        /* Global Reset and Setup */
+        /* Global Setup (Markdown Style 유지) */
         body {
             font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             background-color: #f4f4f7; 
@@ -19,7 +19,6 @@
             overflow: hidden;
         }
 
-        /* Main Layout Wrapper */
         .cli-wrapper {
             width: 100%;
             max-width: 1400px;
@@ -38,15 +37,33 @@
             flex-shrink: 0;
         }
         .sidebar-header {
-            padding: 15px 20px;
+            padding: 10px 20px;
             font-size: 1.1em;
             font-weight: 700;
             color: #333333;
             border-bottom: 1px solid #eeeeee;
+            margin-bottom: 10px;
         }
+        /* New Chat Button Style */
+        #new-chat-button {
+            width: 90%;
+            margin: 0 5%;
+            padding: 10px;
+            background-color: #e0e0e0;
+            color: #333333;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #new-chat-button:hover {
+            background-color: #d0d0d0;
+        }
+
         .history-list {
             list-style: none;
-            padding: 0 10px;
+            padding: 10px 10px;
             margin: 0;
         }
         .history-list li {
@@ -72,7 +89,7 @@
         }
         /* ---------------------------------- */
 
-        /* Command Right Pane Styles */
+        /* Command Right Pane Styles (Output Accumulation) */
         .main-content {
             flex-grow: 1; 
             display: flex;
@@ -88,15 +105,19 @@
             align-items: center; 
             background-color: #ffffff;
         }
-        .output-line {
+        .output-item {
             max-width: 800px; 
             width: 100%;
             padding: 15px 0;
-            border-bottom: 1px dotted #dddddd;
-            color: #333;
-            font-size: 1.05em;
         }
-        .output-response {
+        .output-item:not(:last-child) {
+             border-bottom: 1px dotted #dddddd; /* 대화 항목 간 구분 */
+        }
+        .user-input {
+            font-weight: 700;
+            color: #007bff; /* 사용자 입력 강조 */
+        }
+        .system-response {
             background-color: #f7f7fa; 
             padding: 10px;
             border-left: 3px solid #6c757d;
@@ -152,23 +173,20 @@
     <div class="cli-wrapper">
         <div class="history-sidebar">
             <div class="sidebar-header">
-                📝 Command History
+                💬 Chat History
             </div>
+            <button id="new-chat-button">➕ New Chat</button>
             <ul class="history-list" id="history-list">
                 </ul>
         </div>
         
                 <div class="main-content">
             <div id="output" class="output">
-                <div class="output-line">
-                    <pre>Welcome to the Web CLI Client. Type a command below.</pre>
                 </div>
-            </div>
             <div class="input-area">
                 <div class="input-container">
                     <input type="text" id="command-input" placeholder="Type command here...">
                     <button id="send-button">Send</button>
-                    <button id="clear-button" style="background-color: #6c757d;">Clear</button>
                 </div>
             </div>
         </div>
@@ -178,26 +196,69 @@
         const outputDiv = document.getElementById('output');
         const input = document.getElementById('command-input');
         const sendButton = document.getElementById('send-button');
-        const clearButton = document.getElementById('clear-button');
+        const newChatButton = document.getElementById('new-chat-button');
         const historyList = document.getElementById('history-list');
 
         // --- HISTORY VARIABLES ---
-        const history = [];
-        let historyIndex = 0;
+        // history는 이제 전체 대화 세션 목록을 저장합니다.
+        // 각 세션은 { id: number, title: string, conversation: [] } 형태를 가집니다.
+        const allSessions = [];
+        let currentSessionId = 0; 
+        
+        // 현재 세션의 모든 명령어 입력을 저장합니다 (화살표 키 탐색용)
+        let currentCommands = []; 
+        let commandIndex = 0;
+
         // -------------------------
 
-        function appendMessage(text, isCommand = false) {
-            const line = document.createElement('div');
-            line.className = 'output-line';
-            
-            if (isCommand) {
-                const content = document.createElement('pre');
-                content.innerHTML = `&gt; <span style="font-weight: 700;">${text}</span>`;
-                line.appendChild(content);
-            } else {
-                const responseBlock = document.createElement('div');
-                responseBlock.className = 'output-response';
+        // --- CORE CHAT FUNCTIONALITY ---
+
+        /**
+         * 새로운 대화 세션을 시작합니다.
+         */
+        function startNewChat() {
+            // 현재 대화가 비어있지 않다면 세션을 저장합니다.
+            if (currentCommands.length > 0) {
+                // 세션 목록에 현재 대화를 저장
+                const session = {
+                    id: currentSessionId,
+                    title: currentCommands[0].substring(0, 30) + (currentCommands[0].length > 30 ? '...' : ''),
+                    conversation: Array.from(outputDiv.innerHTML) // 실제로는 내용을 객체화하여 저장해야 하지만, 여기서는 간략화
+                };
+                allSessions.push(session);
                 
+                // 새로운 세션 ID 할당
+                currentSessionId++;
+            }
+
+            // 출력 및 입력 명령어 초기화
+            outputDiv.innerHTML = '';
+            input.value = '';
+            currentCommands = [];
+            commandIndex = 0;
+            
+            // UI 업데이트 (히스토리 목록에 새 세션 추가)
+            updateHistorySidebar();
+            
+            // 시작 메시지 표시
+            appendMessage('Welcome to the new chat session. Type your first command.', false, true);
+        }
+        
+        /**
+         * 채팅 메시지를 출력 창에 추가합니다.
+         */
+        function appendMessage(text, isCommand = false, isSystem = false) {
+            const item = document.createElement('div');
+            item.className = 'output-item';
+            
+            if (isSystem) {
+                 // 초기 Welcome 메시지나 시스템 알림
+                item.innerHTML = `<div class="system-response" style="border-left: 3px solid #007bff; color: #007bff; background-color: #e6f7ff;">${text}</div>`;
+            } else if (isCommand) {
+                // 사용자 입력 (Command)
+                item.innerHTML = `<div><span class="user-input">&gt; ${text}</span></div>`;
+            } else {
+                // 시스템 응답 (Response)
                 let displayHtml = text;
                 if (text.startsWith('✅ SUCCESS')) {
                     displayHtml = `<span style="color: #28a745;">${text}</span>`;
@@ -206,49 +267,38 @@
                 } else if (text.startsWith('...Processing...')) {
                     displayHtml = `<span style="color: #999;">${text}</span>`;
                 }
-                
+
+                const responseBlock = document.createElement('div');
+                responseBlock.className = 'system-response';
                 responseBlock.innerHTML = displayHtml;
-                line.appendChild(responseBlock);
+                item.appendChild(responseBlock);
             }
 
-            outputDiv.appendChild(line);
+            outputDiv.appendChild(item);
             outputDiv.scrollTop = outputDiv.scrollHeight;
         }
 
         /**
-         * History Sidebar를 업데이트하고 클릭 이벤트를 설정합니다.
+         * History Sidebar를 업데이트합니다.
          */
         function updateHistorySidebar() {
             historyList.innerHTML = '';
-            const displayHistory = history.slice(-20); 
-
-            displayHistory.forEach((command, index) => {
+            // 마지막에 저장된 세션을 현재 세션으로 간주하여 active 클래스 부여 (실제 Gemini는 클릭해야 활성화됨)
+            
+            allSessions.slice().reverse().forEach((session, index) => { // 최근 항목이 위로 오도록 역순
                 const li = document.createElement('li');
-                // Use the first few words as the title
-                li.textContent = command.substring(0, 35) + (command.length > 35 ? '...' : ''); 
+                li.textContent = session.title; 
                 
-                // Set the last item as active (가장 최근에 실행된 명령어)
-                if (index === displayHistory.length - 1) {
-                    li.classList.add('active');
-                } else {
-                    li.classList.remove('active');
+                // 현재 세션을 시뮬레이션
+                if (index === 0 && currentCommands.length === 0) { // 새 채팅을 시작한 직후 첫 번째 항목이 활성화되지 않도록
+                    // li.classList.add('active'); 
                 }
                 
-                // --- 핵심 변경: 클릭 이벤트 설정 ---
+                // (이 예제에서는 히스토리 클릭 시 해당 세션 내용을 로드하는 복잡한 로직은 생략합니다.)
                 li.addEventListener('click', () => {
-                    // 1. 입력창에 명령어 로드
-                    input.value = command;
+                    alert(`Loading session: "${session.title}" (ID: ${session.id})\n\n[실제 채팅 앱이라면 이 세션의 대화 내용을 메인 화면에 로드합니다.]`);
                     input.focus();
-                    
-                    // 2. historyIndex를 현재 클릭된 위치로 설정
-                    //   -> 화살표 키로 탐색할 때 자연스럽게 이어지도록 합니다.
-                    historyIndex = history.length - displayHistory.length + index;
-                    
-                    // 3. (선택적) 모든 항목에서 active 클래스를 제거하고 클릭된 항목에만 추가
-                    document.querySelectorAll('.history-list li').forEach(item => item.classList.remove('active'));
-                    li.classList.add('active');
                 });
-                // ------------------------------------
                 
                 historyList.appendChild(li);
             });
@@ -259,23 +309,22 @@
             const command = input.value.trim();
             if (!command) return;
             
-            const lastCommand = history[history.length - 1];
-            if (command && lastCommand !== command) {
-                history.push(command);
-                updateHistorySidebar(); 
-            }
-            historyIndex = history.length; 
+            // 1. 명령어 히스토리에 추가
+            currentCommands.push(command);
+            commandIndex = currentCommands.length; 
 
+            // 첫 번째 명령어라면, 새 세션으로 간주하고 히스토리 사이드바를 업데이트합니다.
+            if (currentCommands.length === 1) {
+                startNewChat(); // 새 채팅 시작 (출력창 초기화 및 ID 관리)
+                // startNewChat에서 이미 outputDiv.innerHTML = '' 했으므로 다시 Welcome 메시지를 지울 필요는 없습니다.
+            }
+            
             input.value = '';
 
-            appendMessage(command, true);
-            appendMessage(`...Processing...`);
+            appendMessage(command, true); // 사용자 입력 출력
+            appendMessage(`...Processing...`); // 로딩 메시지 출력
 
             try {
-                if (outputDiv.children[0] && outputDiv.children[0].textContent.includes('Welcome')) {
-                    outputDiv.children[0].remove();
-                }
-
                 const response = await fetch('/api/send_command', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -286,7 +335,7 @@
                
                 // Find and remove the '...Processing...' message
                 let lastChild = outputDiv.lastChild;
-                if (lastChild && lastChild.querySelector('.output-response') && lastChild.querySelector('.output-response').textContent.includes('Processing')) {
+                if (lastChild && lastChild.textContent.includes('Processing')) {
                     lastChild.remove();
                 }
 
@@ -296,15 +345,29 @@
                     fullResponse += "\n\n" + data.output;
                 }
                
+                // 최종 응답 출력
                 if (data.status === 'success') {
                     appendMessage(`✅ SUCCESS: ${fullResponse}`);
                 } else {
                     appendMessage(`❌ ERROR: ${fullResponse}`);
                 }
                 
+                // 첫 번째 응답을 받은 후, 히스토리 목록을 업데이트하여 세션을 생성합니다.
+                if (currentCommands.length === 1) {
+                    // 첫 명령어와 첫 응답까지 완료된 후 세션을 저장하고 목록에 추가
+                    const session = {
+                        id: currentSessionId,
+                        title: currentCommands[0].substring(0, 30) + (currentCommands[0].length > 30 ? '...' : ''),
+                        // conversation: ... (실제 저장 로직은 생략)
+                    };
+                    allSessions.push(session);
+                    currentSessionId++; 
+                    updateHistorySidebar(); 
+                }
+
             } catch (error) {
                 let lastChild = outputDiv.lastChild;
-                if (lastChild && lastChild.querySelector('.output-response') && lastChild.querySelector('.output-response').textContent.includes('Processing')) {
+                if (lastChild && lastChild.textContent.includes('Processing')) {
                     lastChild.remove();
                 }
                 appendMessage(`❌ ERROR: Failed to connect to server.`);
@@ -313,11 +376,10 @@
         
         // --- Event Listeners ---
         sendButton.addEventListener('click', sendCommand);
-        
-        clearButton.addEventListener('click', () => {
-            outputDiv.innerHTML = '<div class="output-line"><pre>Console Cleared.</pre></div>';
-            input.focus();
-        });
+        newChatButton.addEventListener('click', startNewChat);
+
+        // 초기 시작
+        startNewChat(); 
 
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
@@ -325,22 +387,19 @@
                 sendCommand();
             } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
-                // Arrow key logic remains the same
-                if (historyIndex > 0) {
-                    historyIndex--;
-                    input.value = history[historyIndex];
+                if (commandIndex > 0) {
+                    commandIndex--;
+                    input.value = currentCommands[commandIndex];
                 }
-                // (Optional) 사이드바의 active 클래스를 현재 historyIndex에 해당하는 항목으로 변경하는 로직을 추가할 수 있습니다.
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault();
-                if (historyIndex < history.length - 1) {
-                    historyIndex++;
-                    input.value = history[historyIndex];
-                } else if (historyIndex === history.length - 1) {
-                    historyIndex++;
+                if (commandIndex < currentCommands.length - 1) {
+                    commandIndex++;
+                    input.value = currentCommands[commandIndex];
+                } else if (commandIndex === currentCommands.length - 1) {
+                    commandIndex++;
                     input.value = ''; 
                 }
-                // (Optional) 사이드바의 active 클래스를 현재 historyIndex에 해당하는 항목으로 변경하는 로직을 추가할 수 있습니다.
             }
         });
     </script>
