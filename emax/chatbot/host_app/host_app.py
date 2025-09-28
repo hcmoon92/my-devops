@@ -5,9 +5,9 @@ app = Flask(__name__)
 
 # 🔒 허용된 명령어 목록 (Whitelist) - 보안을 위해 매우 중요
 ALLOWED_COMMANDS = {
-    "hello": {"script": "my_script.py", "args": ["hello"]},
-    "status": {"script": "my_script.py", "args": ["status"]},
-    "image": {"script": "image.py", "args": ["make"]}
+    "hello": {"script": "script_default.py", "args": ["hello"]},
+    "status": {"script": "script_default.py", "args": ["status"]},
+    "image": {"script": "script_image.py", "args": ["make"]}
 }
 
 @app.route('/api/execute', methods=['POST'])
