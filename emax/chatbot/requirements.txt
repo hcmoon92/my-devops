@@ -1,3 +1,0 @@
-gunicorn
-flask # 또는 FastAPI, Django 등 사용하는 웹 프레임워크
-psycopg2-binary
