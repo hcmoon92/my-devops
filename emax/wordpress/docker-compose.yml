@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    ports:
+      - "8080:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress_pass
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./data/wordpress:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - wp-network
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_root
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress_pass
+    volumes:
+      - ./data/db:/var/lib/mysql
+    networks:
+      - wp-network
+
+  python:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    container_name: python
+    volumes:
+      - ./python:/app
+    ports:
+      - "5000:5000"
+    command: python /app/api.py
+    networks:
+      - wp-network
+
+networks:
+  wp-network:
+    driver: bridge
