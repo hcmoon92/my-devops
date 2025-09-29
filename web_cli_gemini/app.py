@@ -5,30 +5,30 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai.errors import APIError
 
-# .env ÆÄÀÏ¿¡¼­ È¯°æ º¯¼ö¸¦ ·ÎµåÇÕ´Ï´Ù. (GEMINI_API_KEY)
+# .env íŒŒì¼ì—ì„œ í™˜ê²½ ë³€ìˆ˜ë¥¼ ë¡œë“œí•©ë‹ˆë‹¤. (GEMINI_API_KEY)
 load_dotenv()
 
 app = Flask(__name__)
 
-# Gemini Å¬¶óÀÌ¾ğÆ® ÃÊ±âÈ­
+# Gemini í´ë¼ì´ì–¸íŠ¸ ì´ˆê¸°í™”
 try:
-    # È¯°æ º¯¼ö¿¡¼­ API Å°¸¦ ÀÚµ¿À¸·Î ·ÎµåÇÕ´Ï´Ù.
+    # í™˜ê²½ ë³€ìˆ˜ì—ì„œ API í‚¤ë¥¼ ìë™ìœ¼ë¡œ ë¡œë“œí•©ë‹ˆë‹¤.
     client = genai.Client()
-    # ¸ğµ¨ ¼³Á¤ (¿øÇÏ´Â ¸ğµ¨·Î º¯°æ °¡´É)
+    # ëª¨ë¸ ì„¤ì • (ì›í•˜ëŠ” ëª¨ë¸ë¡œ ë³€ê²½ ê°€ëŠ¥)
     MODEL_NAME = 'gemini-2.5-flash'
 except Exception as e:
-    # API Å°°¡ ¼³Á¤µÇÁö ¾Ê¾Ò°Å³ª ÃÊ±âÈ­¿¡ ½ÇÆĞÇÑ °æ¿ì
+    # API í‚¤ê°€ ì„¤ì •ë˜ì§€ ì•Šì•˜ê±°ë‚˜ ì´ˆê¸°í™”ì— ì‹¤íŒ¨í•œ ê²½ìš°
     print(f"Error initializing Gemini Client: {e}")
     client = None
 
 @app.route('/')
 def index():
-    """À¥ Å¬¶óÀÌ¾ğÆ®ÀÇ ±âº» HTML ÆäÀÌÁö¸¦ ·»´õ¸µÇÕ´Ï´Ù."""
+    """ì›¹ í´ë¼ì´ì–¸íŠ¸ì˜ ê¸°ë³¸ HTML í˜ì´ì§€ë¥¼ ë Œë”ë§í•©ë‹ˆë‹¤."""
     return render_template('index.html')
 
 @app.route('/api/send_command', methods=['POST'])
 def send_command():
-    """Å¬¶óÀÌ¾ğÆ®·ÎºÎÅÍ ¸í·ÉÀ» ¹Ş¾Æ Gemini API·Î Àü¼ÛÇÏ°í °á°ú¸¦ ¹İÈ¯ÇÕ´Ï´Ù."""
+    """í´ë¼ì´ì–¸íŠ¸ë¡œë¶€í„° ëª…ë ¹ì„ ë°›ì•„ Gemini APIë¡œ ì „ì†¡í•˜ê³  ê²°ê³¼ë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤."""
     if client is None:
         return jsonify({
             "status": "error",
@@ -47,14 +47,14 @@ def send_command():
                 "output": ""
             })
 
-        # Gemini API È£Ãâ (°£´ÜÇÑ ÅØ½ºÆ® »ı¼º)
+        # Gemini API í˜¸ì¶œ (ê°„ë‹¨í•œ í…ìŠ¤íŠ¸ ìƒì„±)
         response = client.models.generate_content(
             model=MODEL_NAME,
-            contents=f"´ÙÀ½ CLI ¸í·É¿¡ ´ëÇÑ ÀÀ´äÀ» »ı¼ºÇØ ÁÖ¼¼¿ä: {command}",
+            contents=f"ë‹¤ìŒ CLI ëª…ë ¹ì— ëŒ€í•œ ì‘ë‹µì„ ìƒì„±í•´ ì£¼ì„¸ìš”: {command}",
         )
 
-        # ÀÀ´ä ÅØ½ºÆ®¸¦ ÆÄ½ÌÇÏ¿© CLI Ãâ·Â Çü½Ä¿¡ ¸ÂÃä´Ï´Ù.
-        # ½ÇÁ¦ CLI È¯°æÃ³·³ Âª°í °£°áÇÏ°Ô ÀÀ´äÇÏµµ·Ï ÇÁ·ÒÇÁÆ®¸¦ ±¸¼ºÇÒ ¼öµµ ÀÖ½À´Ï´Ù.
+        # ì‘ë‹µ í…ìŠ¤íŠ¸ë¥¼ íŒŒì‹±í•˜ì—¬ CLI ì¶œë ¥ í˜•ì‹ì— ë§ì¶¥ë‹ˆë‹¤.
+        # ì‹¤ì œ CLI í™˜ê²½ì²˜ëŸ¼ ì§§ê³  ê°„ê²°í•˜ê²Œ ì‘ë‹µí•˜ë„ë¡ í”„ë¡¬í”„íŠ¸ë¥¼ êµ¬ì„±í•  ìˆ˜ë„ ìˆìŠµë‹ˆë‹¤.
         output_text = response.text
 
         return jsonify({
@@ -77,5 +77,5 @@ def send_command():
         }), 500
 
 if __name__ == '__main__':
-    # °³¹ß ¼­¹ö ½ÇÇà
+    # ê°œë°œ ì„œë²„ ì‹¤í–‰
     app.run(debug=True)
