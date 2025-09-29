@@ -2,6 +2,8 @@ import os
 from flask import Flask, request, Response, render_template
 from dotenv import load_dotenv
 from google import genai
+# types 모듈을 가져와서 GenerateContentConfig를 사용합니다.
+from google.genai import types 
 from google.genai.errors import APIError
 
 # .env 파일에서 환경 변수를 로드합니다. (실제 환경에서 GEMINI_API_KEY를 설정해야 합니다.)
@@ -39,19 +41,21 @@ def generate_stream(command):
         return
 
     try:
-        # 1. API 키는 이 서버(백엔드)에서만 사용됩니다.
-        # 2. 스트리밍 API 호출
+        # Gemini API 호출 설정
+        # 오류 해결: tools 인수를 GenerateContentConfig 객체를 통해 config 매개변수로 전달합니다.
+        generation_config = types.GenerateContentConfig(
+            tools=[{ "google_search": {} }] # Google Search Grounding 설정
+        )
+        
         response_stream = client.models.generate_content_stream(
             model=MODEL_NAME,
             contents=[f"사용자의 명령/질문에 답변하세요. CLI 형식의 답변처럼 짧고 명료하게 응답하되, **굵은 글씨**와 줄 바꿈 등의 Markdown 서식을 사용하여 응답 내용을 풍부하게 작성하세요. 질문: {command}"],
-            # Google Search grounding tool 포함
-            tools=[{ "google_search": {} }],
+            config=generation_config, # 설정 객체를 config 인수로 전달
         )
 
         for chunk in response_stream:
             # 텍스트 조각을 클라이언트에게 즉시 전송
             if chunk.text:
-                # Flask Response에서 실시간으로 텍스트를 전송
                 yield chunk.text
 
     except APIError as e:
@@ -74,7 +78,6 @@ def send_command():
             return Response("Command is empty.", mimetype='text/plain', status=400)
 
         # 제너레이터 함수를 사용하여 스트리밍 응답 반환
-        # Content-Type을 'text/plain'으로 설정하여 클라이언트가 텍스트 스트림으로 받도록 합니다.
         return Response(generate_stream(command), mimetype='text/plain')
 
     except Exception as e:

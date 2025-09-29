@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monochrome Streaming Web CLI - Gemini</title>
+    <title>Gemini-Style Streaming Web CLI</title>
     <style>
-        /* 기본 스타일 */
+        /* 기본 스타일: 하얀 배경, 검은색 글씨 */
         body {
             /* 폰트: Monospace 계열로 통일 */
             font-family: 'Consolas', 'Courier New', monospace; 
-            background-color: #000000; /* 검은색 배경 */
-            color: #FFFFFF; /* 흰색 텍스트 */
+            background-color: #FFFFFF; /* 하얀색 배경 */
+            color: #000000; /* 검은색 텍스트 */
             margin: 0;
             padding: 0;
             display: flex;
@@ -22,10 +22,10 @@
         .container {
             width: 95%; 
             max-width: 800px;
-            background-color: #000000;
-            border: 1px solid #FFFFFF; /* 흰색 테두리 */
+            background-color: #FFFFFF;
+            border: 1px solid #000000; /* 검은색 테두리 */
             border-radius: 4px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); /* 은은한 흰색 그림자 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 은은한 그림자 */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -35,78 +35,90 @@
             height: 60vh; 
             padding: 15px;
             overflow-y: auto;
-            border-bottom: 1px solid #333333; /* 연한 회색 구분선 */
+            border-bottom: 1px solid #DDDDDD; /* 아주 연한 회색 구분선 */
             line-height: 1.6;
             font-size: 14px;
         }
-        /* 스트리밍 출력을 위한 컨테이너 (Markdown 서식 적용을 위해 innerHTML 사용) */
+        /* 스트리밍 출력을 위한 컨테이너 */
         .stream-output-container {
             margin-top: 10px;
-            /* Markdown 줄 바꿈 및 공백 보존 (코드 블록용) */
             white-space: pre-wrap; 
+            min-height: 1.6em; 
         }
 
-        /* ------------------- 텍스트 서식 ------------------- */
+        /* ------------------- 텍스트 서식 (밝은 배경에 맞게 조정) ------------------- */
         .prompt-symbol {
-            color: #AAAAAA; /* 프롬프트 기호는 연한 회색 */
+            color: #555555; /* 어두운 회색 */
             font-weight: bold;
         }
         .success-message {
-            color: #FFFFFF; /* 성공 메시지는 흰색 */
+            color: #008000; /* 다크 그린 */
         }
         .error-message {
-            color: #FF6666; /* 오류 메시지는 약간의 빨간색 (읽기 쉽게) */
+            color: #CC0000; /* 다크 레드 */
         }
         .info-message {
-            color: #CCCCCC; /* 정보 메시지는 연한 회색 */
+            color: #888888; /* 중간 회색 */
         }
         /* Markdown 굵은 글씨 스타일 */
         strong {
-            color: #FFFFFF;
+            color: #000000;
             font-weight: bold;
         }
         /* Markdown 기울임꼴 스타일 */
         em {
-            color: #AAAAAA;
+            color: #555555;
             font-style: italic;
+        }
+        
+        /* Typing cursor effect */
+        .stream-output-container.cursor::after {
+            content: "|";
+            display: inline-block;
+            animation: blink 0.7s step-start infinite;
+            margin-left: 2px;
+            color: #000000; /* 검은색 커서 */
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
         }
 
         /* ------------------- 입력 영역 ------------------- */
         .input-area {
             display: flex;
             padding: 10px;
-            background-color: #000000;
+            background-color: #FFFFFF;
         }
         .input-area input {
             flex-grow: 1;
             padding: 12px;
-            border: 1px solid #FFFFFF;
+            border: 1px solid #AAAAAA; /* 연한 회색 테두리 */
             border-radius: 4px 0 0 4px;
-            background-color: #111111; /* 어두운 입력 필드 */
-            color: #FFFFFF;
+            background-color: #EEEEEE; /* 아주 연한 회색 입력 필드 */
+            color: #000000;
             outline: none;
             font-size: 16px;
             font-family: inherit;
         }
         .input-area input:focus {
-            border-color: #CCCCCC;
+            border-color: #888888;
         }
         .input-area button {
             margin-left: -1px; 
             padding: 12px 15px;
-            border: 1px solid #FFFFFF;
+            border: 1px solid #AAAAAA;
             border-left: none;
             border-radius: 0 4px 4px 0;
-            background-color: #222222; 
-            color: #FFFFFF;
+            background-color: #F0F0F0; /* 밝은 버튼 배경 */
+            color: #000000;
             cursor: pointer;
             font-weight: bold;
             transition: background-color 0.2s, color 0.2s;
             flex-shrink: 0;
         }
         .input-area button:hover:not(:disabled) {
-            background-color: #444444;
-            color: #FFFFFF;
+            background-color: #E0E0E0;
+            color: #000000;
         }
         .input-area button:disabled {
             cursor: not-allowed;
@@ -134,7 +146,7 @@
 <body>
     <div class="container">
         <div class="output" id="output">
-            <span class="info-message">Welcome to the Monochrome Streaming Web CLI powered by Gemini.</span><br>
+            <span class="info-message">Welcome to the Gemini-Style Streaming Web CLI.</span><br>
             <span class="info-message">Enter a command or question (e.g., **Docker란 무엇인가?**).</span><br>
         </div>
         <div class="input-area">
@@ -148,14 +160,13 @@
         const input = document.getElementById('command-input');
         const sendButton = document.getElementById('send-button');
 
-        // 클라이언트에서 API 키를 제거하고 Flask 백엔드 URL을 사용합니다.
+        // Flask 백엔드 URL을 사용하며, API 키는 노출되지 않습니다.
         const apiUrl = '/api/send_command'; 
         
         // ------------------- Utility Functions -------------------
         
         /**
          * 간단한 Markdown 서식을 HTML로 변환합니다.
-         * 스트리밍 완료 후 최종 텍스트에만 적용되어, **bold**와 줄 바꿈을 처리합니다.
          * @param {string} markdownText - 마크다운 형식의 텍스트
          * @returns {string} HTML 형식의 텍스트
          */
@@ -178,13 +189,9 @@
 
         /**
          * 출력 영역에 새 메시지를 추가합니다.
-         * @param {string} htmlContent - 추가할 HTML 내용
-         * @param {string} className - 추가할 CSS 클래스
-         * @returns {HTMLElement} 새로 추가된 메시지 요소
          */
         function appendMessage(htmlContent, className = '') {
             const messageElement = document.createElement('div');
-            // innerHTML을 사용하여 서식(bold, br 등)을 표시합니다.
             messageElement.innerHTML = htmlContent; 
             if (className) {
                 messageElement.classList.add(className);
@@ -211,6 +218,7 @@
             
             // 스트리밍 출력을 담을 임시 컨테이너 생성
             const streamingContainer = appendMessage('', 'stream-output-container');
+            streamingContainer.classList.add('cursor'); // 스트리밍 시작 시 커서 추가
             
             // 스크롤을 맨 아래로 이동
             outputDiv.scrollTop = outputDiv.scrollHeight;
@@ -227,7 +235,6 @@
                 });
 
                 if (!response.ok) {
-                    // 백엔드에서 JSON 대신 텍스트로 에러 메시지를 보낼 경우를 대비
                     const errorText = await response.text();
                     throw new Error(errorText || `HTTP error! Status: ${response.status}`);
                 }
@@ -236,7 +243,7 @@
                     throw new Error("서버 응답 본문이 비어 있습니다. 스트리밍이 불가능합니다.");
                 }
 
-                // 3. 스트리밍 처리 (백엔드가 보내는 일반 텍스트 스트림 처리)
+                // 3. 스트리밍 처리 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder('utf-8');
                 
@@ -275,6 +282,8 @@
                 sendButton.disabled = false;
                 input.focus();
                 outputDiv.scrollTop = outputDiv.scrollHeight;
+                
+                streamingContainer.classList.remove('cursor'); // 스트리밍 완료 후 커서 제거
                 
                 // 프롬프트 기호 다시 출력
                 appendMessage('<span class="prompt-symbol">&gt;</span>', 'prompt-message');
