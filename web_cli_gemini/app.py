@@ -78,4 +78,4 @@ def send_command():
 
 if __name__ == '__main__':
     # 개발 서버 실행
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=7070, debug=True)
