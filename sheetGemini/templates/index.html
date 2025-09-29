@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini-Style Streaming Data CLI</title>
+    <style>
+        /* 기본 스타일: 하얀 배경, 검은색 글씨 */
+        body {
+            /* 폰트: Monospace 계열로 통일 */
+            font-family: 'Consolas', 'Courier New', monospace; 
+            background-color: #FFFFFF; /* 하얀색 배경 */
+            color: #000000; /* 검은색 텍스트 */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s;
+        }
+        .container {
+            width: 95%; 
+            max-width: 800px;
+            background-color: #FFFFFF;
+            border: 1px solid #000000; /* 검은색 테두리 */
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 은은한 그림자 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.3s, box-shadow 0.3s;
+        }
+        .output {
+            height: 60vh; 
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid #DDDDDD; /* 아주 연한 회색 구분선 */
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        /* 스트리밍 출력을 위한 컨테이너 */
+        .stream-output-container {
+            margin-top: 10px;
+            white-space: pre-wrap; 
+            min-height: 1.6em; 
+        }
+
+        /* ------------------- 텍스트 서식 ------------------- */
+        .prompt-symbol {
+            color: #555555; /* 어두운 회색 */
+            font-weight: bold;
+        }
+        .success-message {
+            color: #008000; /* 다크 그린 */
+        }
+        .error-message {
+            color: #CC0000; /* 다크 레드 */
+        }
+        .info-message {
+            color: #888888; /* 중간 회색 */
+        }
+        /* Markdown 굵은 글씨 스타일 */
+        strong {
+            color: #000000;
+            font-weight: bold;
+        }
+        /* Markdown 기울임꼴 스타일 */
+        em {
+            color: #555555;
+            font-style: italic;
+        }
+        
+        /* Typing cursor effect */
+        .stream-output-container.cursor::after {
+            content: "|";
+            display: inline-block;
+            animation: blink 0.7s step-start infinite;
+            margin-left: 2px;
+            color: #000000; /* 검은색 커서 */
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* ------------------- 입력 영역 ------------------- */
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background-color: #FFFFFF;
+        }
+        .input-area input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #AAAAAA; /* 연한 회색 테두리 */
+            border-radius: 4px 0 0 4px;
+            background-color: #EEEEEE; /* 아주 연한 회색 입력 필드 */
+            color: #000000;
+            outline: none;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .input-area input:focus {
+            border-color: #888888;
+        }
+        .input-area button {
+            margin-left: -1px; 
+            padding: 12px 15px;
+            border: 1px solid #AAAAAA;
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+            background-color: #F0F0F0; /* 밝은 버튼 배경 */
+            color: #000000;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s, color 0.2s;
+            flex-shrink: 0;
+        }
+        .input-area button:hover:not(:disabled) {
+            background-color: #E0E0E0;
+            color: #000000;
+        }
+        .input-area button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* ------------------- 반응형 디자인 ------------------- */
+        @media (max-width: 600px) {
+            body {
+                align-items: flex-start;
+                padding-top: 10px;
+            }
+            .container {
+                width: 98%;
+                min-height: 95vh;
+            }
+            .output {
+                height: 70vh;
+                font-size: 13px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="output" id="output">
+            <span class="info-message">Welcome to the Gemini-Style Streaming Data CLI.</span><br>
+            <span class="info-message">현재 **가상의 Google Sheet 판매 보고서 데이터**를 분석하고 있습니다.</span><br>
+            <span class="info-message">데이터에 기반한 질문을 입력하세요. (e.g., **3월에 가장 많이 팔린 제품은?**)</span><br>
+        </div>
+        <div class="input-area">
+            <input type="text" id="command-input" placeholder="데이터 분석 요청을 입력하세요..." value="전체 기간 동안 Laptop의 총 매출(Revenue)은 얼마야?">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const outputDiv = document.getElementById('output');
+        const input = document.getElementById('command-input');
+        const sendButton = document.getElementById('send-button');
+
+        // Flask 백엔드 URL을 사용하며, API 키는 노출되지 않습니다.
+        const apiUrl = '/api/send_command'; 
+        
+        // ------------------- Utility Functions -------------------
+        
+        /**
+         * 간단한 Markdown 서식을 HTML로 변환합니다.
+         */
+        function convertSimpleMarkdownToHtml(markdownText) {
+            let htmlText = markdownText;
+            
+            // **bold** to <strong>bold</strong>
+            htmlText = htmlText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // *italic* to <em>italic</em>
+            htmlText = htmlText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // HTML 줄 바꿈
+            htmlText = htmlText.replace(/\n/g, '<br>');
+            
+            return htmlText;
+        }
+        
+        // ------------------- UI Functions -------------------
+
+        /**
+         * 출력 영역에 새 메시지를 추가합니다.
+         */
+        function appendMessage(htmlContent, className = '') {
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = htmlContent; 
+            if (className) {
+                messageElement.classList.add(className);
+            }
+            outputDiv.appendChild(messageElement);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+            return messageElement;
+        }
+
+        /**
+         * 명령 실행 및 스트리밍 응답을 처리합니다.
+         */
+        async function sendCommand() {
+            const command = input.value.trim();
+            if (!command) return;
+
+            // UI 상태 변경
+            input.value = '';
+            input.disabled = true;
+            sendButton.disabled = true;
+
+            // 1. 사용자 명령 및 로딩 표시
+            appendMessage(`<span class="prompt-symbol">&gt;</span> ${command}`, 'prompt-message');
+            
+            // 스트리밍 출력을 담을 임시 컨테이너 생성
+            const streamingContainer = appendMessage('', 'stream-output-container');
+            streamingContainer.classList.add('cursor'); // 스트리밍 시작 시 커서 추가
+            
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+
+            let fullText = '';
+            let isError = false;
+
+            try {
+                // 2. Flask 백엔드 엔드포인트에 요청
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || `HTTP error! Status: ${response.status}`);
+                }
+                
+                if (!response.body) {
+                    throw new Error("서버 응답 본문이 비어 있습니다. 스트리밍이 불가능합니다.");
+                }
+
+                // 3. 스트리밍 처리 
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                
+                let done = false;
+                
+                while (!done) {
+                    const { value, done: readerDone } = await reader.read();
+                    done = readerDone;
+
+                    if (value) {
+                        const chunk = decoder.decode(value, { stream: true });
+                        
+                        fullText += chunk;
+                        // 실시간 스트리밍: chunk를 텍스트로 추가
+                        streamingContainer.textContent = fullText;
+                        outputDiv.scrollTop = outputDiv.scrollHeight;
+                    }
+                }
+
+                // 4. 스트리밍 완료 후 Markdown 변환 및 최종 렌더링
+                const finalHtml = convertSimpleMarkdownToHtml(fullText);
+                streamingContainer.innerHTML = finalHtml;
+                
+                appendMessage('<span class="success-message">✅ Data analysis completed.</span>', 'status-line');
+
+
+            } catch (error) {
+                isError = true;
+                const errorMessage = `❌ ERROR: ${error.message}. Check the console for details.`;
+                appendMessage(errorMessage, 'error-message');
+                // 에러 발생 시 스트리밍 컨테이너에 에러 메시지 추가
+                streamingContainer.innerHTML = `<span class="error-message">${error.message}</span>`;
+            } finally {
+                // UI 상태 복구
+                input.disabled = false;
+                sendButton.disabled = false;
+                input.focus();
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+                
+                streamingContainer.classList.remove('cursor'); // 스트리밍 완료 후 커서 제거
+                
+                // 프롬프트 기호 다시 출력
+                appendMessage('<span class="prompt-symbol">&gt;</span>', 'prompt-message');
+            }
+        }
+
+        // ------------------- Event Listeners -------------------
+        sendButton.addEventListener('click', sendCommand);
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // 기본 Enter 동작(폼 제출) 방지
+                sendCommand();
+            }
+        });
+        
+        // 페이지 로드 시 입력 필드에 포커스
+        window.onload = () => {
+             input.focus();
+        };
+
+    </script>
+</body>
+</html>
