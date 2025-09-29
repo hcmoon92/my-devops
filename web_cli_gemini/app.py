@@ -1,80 +1,84 @@
 import os
-import json
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, Response, render_template
 from dotenv import load_dotenv
 from google import genai
 from google.genai.errors import APIError
 
-# .env 파일에서 환경 변수를 로드합니다. (GEMINI_API_KEY)
+# .env 파일에서 환경 변수를 로드합니다. (실제 환경에서 GEMINI_API_KEY를 설정해야 합니다.)
 load_dotenv()
 
 app = Flask(__name__)
 
-# Gemini 클라이언트 초기화
+# Gemini 클라이언트 초기화. 키는 서버 환경에서 안전하게 로드됩니다.
+client = None
+MODEL_NAME = 'gemini-2.5-flash-preview-05-20'
+
 try:
     # 환경 변수에서 API 키를 자동으로 로드합니다.
     client = genai.Client()
-    # 모델 설정 (원하는 모델로 변경 가능)
-    MODEL_NAME = 'gemini-2.5-flash'
+    print("Gemini Client initialized successfully.")
 except Exception as e:
-    # API 키가 설정되지 않았거나 초기화에 실패한 경우
     print(f"Error initializing Gemini Client: {e}")
     client = None
 
 @app.route('/')
 def index():
     """웹 클라이언트의 기본 HTML 페이지를 렌더링합니다."""
+    # 클라이언트 HTML 파일을 렌더링합니다.
     return render_template('index.html')
+
+def generate_stream(command):
+    """
+    Gemini API 스트리밍 호출을 위한 제너레이터 함수.
+    응답 토큰이 생성될 때마다 yield를 통해 실시간으로 반환합니다.
+    """
+    global client, MODEL_NAME
+
+    if client is None:
+        yield "Error: Gemini API Client is not initialized. Please check server configuration."
+        return
+
+    try:
+        # 1. API 키는 이 서버(백엔드)에서만 사용됩니다.
+        # 2. 스트리밍 API 호출
+        response_stream = client.models.generate_content_stream(
+            model=MODEL_NAME,
+            contents=[f"사용자의 명령/질문에 답변하세요. CLI 형식의 답변처럼 짧고 명료하게 응답하되, **굵은 글씨**와 줄 바꿈 등의 Markdown 서식을 사용하여 응답 내용을 풍부하게 작성하세요. 질문: {command}"],
+            # Google Search grounding tool 포함
+            tools=[{ "google_search": {} }],
+        )
+
+        for chunk in response_stream:
+            # 텍스트 조각을 클라이언트에게 즉시 전송
+            if chunk.text:
+                # Flask Response에서 실시간으로 텍스트를 전송
+                yield chunk.text
+
+    except APIError as e:
+        yield f"\n\nGemini API Error: {e}"
+    except Exception as e:
+        yield f"\n\nAn unexpected error occurred: {e}"
 
 @app.route('/api/send_command', methods=['POST'])
 def send_command():
-    """클라이언트로부터 명령을 받아 Gemini API로 전송하고 결과를 반환합니다."""
+    """클라이언트로부터 명령을 받아 Gemini API로 전송하고 결과를 스트리밍합니다."""
+    
     if client is None:
-        return jsonify({
-            "status": "error",
-            "message": "Gemini API Client is not initialized. Check your GEMINI_API_KEY.",
-            "output": ""
-        }), 500
+        return Response("Gemini API Client is not initialized. Check your server API key.", mimetype='text/plain', status=500)
 
     try:
         data = request.get_json()
         command = data.get('command', '').strip()
 
         if not command:
-            return jsonify({
-                "status": "error",
-                "message": "Command is empty.",
-                "output": ""
-            })
+            return Response("Command is empty.", mimetype='text/plain', status=400)
 
-        # Gemini API 호출 (간단한 텍스트 생성)
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=f"다음 CLI 명령에 대한 응답을 생성해 주세요: {command}",
-        )
+        # 제너레이터 함수를 사용하여 스트리밍 응답 반환
+        # Content-Type을 'text/plain'으로 설정하여 클라이언트가 텍스트 스트림으로 받도록 합니다.
+        return Response(generate_stream(command), mimetype='text/plain')
 
-        # 응답 텍스트를 파싱하여 CLI 출력 형식에 맞춥니다.
-        # 실제 CLI 환경처럼 짧고 간결하게 응답하도록 프롬프트를 구성할 수도 있습니다.
-        output_text = response.text
-
-        return jsonify({
-            "status": "success",
-            "message": f"Command executed successfully by {MODEL_NAME}.",
-            "output": output_text
-        })
-
-    except APIError as e:
-        return jsonify({
-            "status": "error",
-            "message": f"Gemini API Error: {e}",
-            "output": ""
-        }), 500
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"An unexpected error occurred: {e}",
-            "output": ""
-        }), 500
+        return Response(f"An unexpected error occurred in Flask: {e}", mimetype='text/plain', status=500)
 
 if __name__ == '__main__':
     # 개발 서버 실행

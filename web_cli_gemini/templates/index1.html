@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web CLI Client - Gemini</title>
+    <style>
+        /* 기본 스타일 */
+        body {
+            font-family: 'Consolas', 'Courier New', monospace; /* CLI 느낌을 살리기 위해 폰트 변경 */
+            background-color: #1e1e1e; /* 더 어두운 배경 */
+            color: #00ff00; /* 녹색 CLI 텍스트 */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s;
+        }
+        .container {
+            width: 95%; /* 모바일에서 더 넓게 사용 */
+            max-width: 800px;
+            background-color: #000000;
+            border: 1px solid #00ff00; /* 녹색 테두리 */
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); /* 녹색 그림자 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width 0.3s, box-shadow 0.3s;
+        }
+        .output {
+            height: 60vh; /* 뷰포트 높이 기반으로 설정 */
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid #00ff00;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background-color: #000000;
+        }
+        .input-area input {
+            flex-grow: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            background-color: #333333;
+            color: #00ff00;
+            outline: none;
+            font-size: 16px;
+        }
+        .input-area button {
+            margin-left: -1px; /* input과 붙여서 둥근 모서리 연결 */
+            padding: 12px 15px;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            background-color: #00aaff; /* 눈에 잘 띄는 파란색 */
+            color: #ffffff;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
+        }
+        .input-area button:hover {
+            background-color: #0088cc;
+        }
+        /* 메시지 스타일 */
+        .prompt-symbol {
+            color: #ffffff; /* 프롬프트 기호는 흰색으로 */
+            font-weight: bold;
+        }
+        .success-message {
+            color: #00ff00;
+        }
+        .error-message {
+            color: #ff3333; /* 빨간색 오류 메시지 */
+        }
+        .info-message {
+            color: #00aaff;
+        }
+
+        /* ------------------- 반응형 디자인 ------------------- */
+        
+        /* 모바일 세로 모드 (max-width: 600px 이하) */
+        @media (max-width: 600px) {
+            body {
+                align-items: flex-start; /* 상단 정렬 */
+                padding-top: 10px;
+            }
+            .container {
+                width: 98%;
+                max-width: none;
+                min-height: 95vh;
+            }
+            .output {
+                height: 70vh; /* 모바일에서 출력 영역을 더 넓게 */
+                font-size: 13px;
+                padding: 10px;
+            }
+            .input-area {
+                padding: 8px;
+            }
+            .input-area input {
+                padding: 10px;
+                font-size: 14px;
+            }
+            .input-area button {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+        }
+        
+        /* 모바일 가로 모드 및 소형 태블릿 (601px ~ 800px) */
+        @media (min-width: 601px) and (max-width: 800px) {
+            .container {
+                width: 90%;
+            }
+            .output {
+                height: 50vh;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="output" id="output">
+            <span class="info-message">Welcome to the Web CLI Client powered by Gemini.</span><br>
+            <span class="info-message">Type a command (e.g., explain what is a black hole, write a python function to sort an array).</span><br>
+        </div>
+        <div class="input-area">
+            <input type="text" id="command-input" placeholder="Enter command...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const outputDiv = document.getElementById('output');
+        const input = document.getElementById('command-input');
+        const sendButton = document.getElementById('send-button');
+
+        function appendMessage(text, className = '') {
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = text; // HTML 태그 허용을 위해 innerHTML 사용
+            if (className) {
+                messageElement.classList.add(className);
+            }
+            outputDiv.appendChild(messageElement);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        async function sendCommand() {
+            const command = input.value.trim();
+            if (!command) return;
+
+            // Clear input field
+            input.value = '';
+
+            // 사용자 명령 출력
+            appendMessage(`<span class="prompt-symbol">&gt;</span> ${command}`, 'prompt-message');
+            appendMessage(`<span class="info-message">...Processing command with Gemini...</span>`);
+
+            try {
+                const response = await fetch('/api/send_command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                });
+
+                const data = await response.json();
+                
+                // 이전 "...Processing..." 메시지 삭제 또는 교체 (선택 사항)
+
+                if (data.status === 'success') {
+                    // 성공 메시지 출력
+                    appendMessage(`<span class="success-message">✅ SUCCESS: ${data.message}</span>`, 'status-line');
+                    if (data.output) {
+                        // 결과 출력 (Gemini 응답)
+                        // 응답 텍스트를 HTML 엔티티로 변환하여 안전하게 출력
+                        const formattedOutput = data.output
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/\n/g, '<br>'); // 줄 바꿈을 <br>로 변환
+                            
+                        appendMessage(formattedOutput);
+                    }
+                } else {
+                    // 오류 메시지 출력
+                    appendMessage(`<span class="error-message">❌ ERROR: ${data.message}</span>`, 'status-line');
+                    if (data.output) {
+                        appendMessage(data.output, 'error-message');
+                    }
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                appendMessage(`<span class="error-message">❌ ERROR: Failed to connect to server or handle response.</span>`);
+            }
+        }
+
+        sendButton.addEventListener('click', sendCommand);
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                sendCommand();
+            }
+        });
+    </script>
+</body>
+</html>
