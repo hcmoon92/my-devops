@@ -2,66 +2,250 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client</title>
+    <title>Web CLI Client - Full Overlay Sidebar (Image Upload)</title>
     <style>
+        /* Global Setup */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #2c2f33;
-            color: #ffffff;
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f7;
+            color: #333333;
             margin: 0;
             padding: 0;
             display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            align-items: stretch;
         }
-        .container {
-            width: 80%;
-            max-width: 800px;
-            background-color: #23272a;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+
+        /* Flexbox Main Wrapper - Relative for Absolute positioning */
+        .cli-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            flex-grow: 1;
+            position: relative;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Main Content Right Pane Styles --- */
+        .main-content {
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            z-index: 5;
         }
-        .output {
-            height: 400px;
-            padding: 20px;
+
+        /* --- History Left Pane Styles (Overlay/Absolute Position) --- */
+        .history-sidebar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 200px;
+            min-width: 200px;
+            background-color: #f7f7fa;
+            padding: 10px 0;
+            overflow: hidden;
+            transform: translateX(-100px);
+            transition: transform 0.3s ease-in-out;
+            z-index: 10;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .cli-wrapper:hover .history-sidebar {
+            transform: translateX(0);
             overflow-y: auto;
-            border-bottom: 1px solid #2f363c;
-            line-height: 1.6;
+        }
+
+        /* --- Sidebar Internal Styles --- */
+        .sidebar-header {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #333333;
+            border-bottom: 1px solid #eeeeee;
+            margin-bottom: 10px;
+            white-space: nowrap;
+        }
+
+        #new-chat-button {
+            width: 90%;
+            margin: 0 5% 15px 5%;
+            padding: 10px;
+            background-color: #e0e0e0;
+            color: #333333;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s 0.1s;
+        }
+        .cli-wrapper:hover #new-chat-button { opacity: 1; }
+
+        .history-list {
+            list-style: none;
+            padding: 10px 10px;
+            margin: 0;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s 0.1s;
+        }
+        .cli-wrapper:hover .history-list { opacity: 1; }
+
+        .history-list li {
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border-radius: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background-color 0.1s, color 0.1s;
+            color: #555555;
+        }
+        .history-list li:hover { background-color: #e8e8f0; color: #333333; }
+        .history-list li.active { background-color: #e0e0e0; font-weight: 600; color: #333333; }
+
+        /* --- Main Content Internal Styles --- */
+        .output {
+            flex-grow: 1;
+            padding: 20px 40px;
+            overflow-y: auto;
+            line-height: 1.8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #ffffff;
+        }
+        .output-item {
+            max-width: 800px;
+            width: 100%;
+            padding: 15px 0;
+        }
+        .output-item:not(:last-child) { border-bottom: 1px dotted #dddddd; }
+        .user-input { font-weight: 700; color: #007bff; }
+        .system-response {
+            background-color: #f7f7fa;
+            padding: 10px;
+            border-left: 3px solid #6c757d;
+            margin-top: 5px;
+            font-family: monospace;
             white-space: pre-wrap;
+            color: #555;
+            font-size: 0.95em;
         }
         .input-area {
             display: flex;
-            padding: 15px;
+            flex-direction: column; /* 텍스트 입력과 파일 입력 분리 */
+            padding: 20px;
+            flex-shrink: 0;
+            justify-content: center;
+            border-top: 1px solid #eeeeee;
+            background-color: #ffffff;
         }
-        .input-area input {
+        
+        /* New Style for Image Upload Area */
+        .file-upload-area {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 10px auto;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 5px 0;
+        }
+        
+        #image-upload {
+            display: none; /* 실제 파일 입력 필드는 숨깁니다 */
+        }
+        
+        .upload-label {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #555;
+            margin-right: 10px;
+            transition: background-color 0.2s;
+        }
+        .upload-label:hover {
+            background-color: #e0e0e0;
+        }
+        
+        #file-name-display {
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        /* Existing Style for Command Input */
+        .input-container {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            padding: 8px 15px;
+        }
+        .input-container input {
             flex-grow: 1;
-            padding: 10px;
+            padding: 5px 0;
             border: none;
-            border-radius: 4px;
-            background-color: #40444b;
-            color: #ffffff;
+            background-color: transparent;
+            color: #333333;
+            outline: none;
         }
-        .input-area button {
+        .input-container button {
             margin-left: 10px;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border: none;
             border-radius: 4px;
-            background-color: #7289da;
+            background-color: #007bff;
             color: #ffffff;
             cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
         }
+        .input-container button:hover { background-color: #0056b3; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="output" id="output">Welcome to the Web CLI Client. Type a command below.</div>
-        <div class="input-area">
-            <input type="text" id="command-input" placeholder="Type a command (e.g., hello, status, clone)">
-            <button id="send-button">Send</button>
+    <div class="cli-wrapper">
+
+        <div class="main-content">
+            <div id="output" class="output">
+            </div>
+            <div class="input-area">
+                <div class="file-upload-area">
+                    <input type="file" id="image-upload" accept="image/*">
+                    <label for="image-upload" class="upload-label">
+                        📎 Attach Image
+                    </label>
+                    <span id="file-name-display">No file selected.</span>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="command-input" placeholder="Type command here (e.g., 'hello, status, analyze')...">
+                    <button id="send-button">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-sidebar" id="history-sidebar">
+            <div class="sidebar-header">
+                💬 Chat History
+            </div>
+            <button id="new-chat-button">➕ New Chat</button>
+            <ul class="history-list" id="history-list">
+            </ul>
         </div>
     </div>
 
@@ -69,53 +253,276 @@
         const outputDiv = document.getElementById('output');
         const input = document.getElementById('command-input');
         const sendButton = document.getElementById('send-button');
+        const newChatButton = document.getElementById('new-chat-button');
+        const historyList = document.getElementById('history-list');
+        // 🚩 추가된 요소
+        const imageUpload = document.getElementById('image-upload');
+        const fileNameDisplay = document.getElementById('file-name-display');
 
-        function appendMessage(text) {
-            outputDiv.innerHTML += text + '<br>';
-            outputDiv.scrollTop = outputDiv.scrollHeight;
+
+        // { id: number, title: string, commands: string[], conversation: {type: 'user'/'system', text: string}[] }
+        const allSessions = [];
+        let currentSessionId = 0;
+        let currentCommands = [];
+        let commandIndex = 0;
+        let activeSessionId = null;
+
+        /**
+         * 채팅 메시지 객체를 출력 창에 추가하고, 로딩 메시지 요소를 반환합니다.
+         */
+        function appendMessage(item, targetDiv) {
+            const container = targetDiv || outputDiv;
+            const outputItem = document.createElement('div');
+            outputItem.className = 'output-item';
+
+            if (item.type === 'system_welcome') {
+                outputItem.innerHTML = `<div class="system-response" style="border-left: 3px solid #007bff; color: #007bff; background-color: #e6f7ff;">${item.text}</div>`;
+            } else if (item.type === 'user') {
+                // 사용자가 파일을 첨부했을 경우 표시
+                let fileInfo = '';
+                if (item.file) {
+                    fileInfo = `<span style="font-style: italic; color: #6c757d;"> (File: ${item.file})</span>`;
+                }
+                outputItem.innerHTML = `<div><span class="user-input">&gt; ${item.text}</span>${fileInfo}</div>`;
+            } else {
+                const responseBlock = document.createElement('div');
+                responseBlock.className = 'system-response';
+
+                let displayHtml = item.text;
+                if (item.text.startsWith('✅ SUCCESS')) {
+                    displayHtml = `<span style="color: #28a745;">${item.text}</span>`;
+                } else if (item.text.startsWith('❌ ERROR')) {
+                    displayHtml = `<span style="color: #dc3545;">${item.text}</span>`;
+                } else if (item.text.startsWith('...Processing...')) {
+                    displayHtml = `<span style="color: #999;">${item.text}</span>`;
+                }
+
+                responseBlock.innerHTML = displayHtml;
+                outputItem.appendChild(responseBlock);
+            }
+
+            container.appendChild(outputItem);
+            container.scrollTop = container.scrollHeight;
+            return outputItem;
+        }
+
+        /**
+         * 세션 히스토리 목록을 업데이트합니다.
+         */
+        function updateHistorySidebar() {
+            historyList.innerHTML = '';
+
+            allSessions.slice().reverse().forEach((session) => {
+                const li = document.createElement('li');
+                li.textContent = session.title;
+                li.setAttribute('data-session-id', session.id);
+
+                if (session.id === activeSessionId) {
+                    li.classList.add('active');
+                }
+
+                li.addEventListener('click', () => {
+                    loadSession(session.id);
+                });
+
+                historyList.appendChild(li);
+            });
+            historyList.scrollTop = 0;
+        }
+
+        /**
+         * 특정 세션 ID에 해당하는 대화 내용을 메인 창에 로드합니다.
+         */
+        function loadSession(sessionId) {
+            const session = allSessions.find(s => s.id === sessionId);
+            if (!session) return;
+
+            outputDiv.innerHTML = '';
+            session.conversation.forEach(item => {
+                appendMessage(item);
+            });
+
+            activeSessionId = sessionId;
+            currentCommands = session.commands || [];
+            commandIndex = currentCommands.length;
+            input.value = '';
+            input.focus();
+
+            document.querySelectorAll('.history-list li').forEach(item => item.classList.remove('active'));
+            const activeLi = document.querySelector(`[data-session-id="${sessionId}"]`);
+            if(activeLi) activeLi.classList.add('active');
+            
+            // 🚩 세션 로드 시 파일 입력 초기화
+            imageUpload.value = '';
+            fileNameDisplay.textContent = 'No file selected.';
+        }
+
+        /**
+         * 새로운 대화 세션을 시작합니다.
+         */
+        function startNewChat() {
+            if (activeSessionId !== null) {
+                const sessionToUpdate = allSessions.find(s => s.id === activeSessionId);
+                if (sessionToUpdate && sessionToUpdate.title === 'New Chat') {
+                    const firstUserCommand = sessionToUpdate.conversation.find(item => item.type === 'user');
+                    if(firstUserCommand) {
+                        sessionToUpdate.title = firstUserCommand.text.substring(0, 30) + (firstUserCommand.text.length > 30 ? '...' : '');
+                    }
+                }
+            }
+
+            const newSession = {
+                id: currentSessionId++,
+                title: 'New Chat',
+                commands: [],
+                conversation: []
+            };
+            allSessions.push(newSession);
+
+            activeSessionId = newSession.id;
+            currentCommands = newSession.commands;
+            commandIndex = 0;
+
+            outputDiv.innerHTML = '';
+            input.value = '';
+            const welcomeMsg = {type: 'system_welcome', text: 'Welcome to the new chat session. Type your first command. You can also attach an image.'};
+            newSession.conversation.push(welcomeMsg);
+            appendMessage(welcomeMsg);
+
+            updateHistorySidebar();
+            input.focus();
+            
+            // 🚩 새 채팅 시작 시 파일 입력 초기화
+            imageUpload.value = '';
+            fileNameDisplay.textContent = 'No file selected.';
         }
 
         async function sendCommand() {
             const command = input.value.trim();
-            if (!command) return;
+            const file = imageUpload.files[0];
+            
+            // 명령이나 파일 둘 중 하나는 있어야 합니다.
+            if (!command && !file) return;
 
-            // Clear input field
+            const currentSession = allSessions.find(s => s.id === activeSessionId);
+            if (!currentSession) return;
+
+            // 1. 명령어 히스토리에 추가
+            const commandForHistory = command + (file ? ` [File: ${file.name}]` : '');
+            currentCommands.push(commandForHistory);
+            commandIndex = currentCommands.length;
+
+            // 2. 사용자 입력 출력 및 세션에 저장
             input.value = '';
+            const userMsg = {type: 'user', text: command || '(File Upload)', file: file ? file.name : null};
+            currentSession.conversation.push(userMsg);
+            appendMessage(userMsg);
+            
+            // 3. FormData 구성 (텍스트와 파일 모두 포함)
+            const formData = new FormData();
+            formData.append('command', command);
+            if (file) {
+                formData.append('image', file); // 'image' 필드는 서버에서 파일을 받을 이름입니다.
+            }
 
-            appendMessage(`> ${command}`);
-            appendMessage(`...Processing...`);
+            // 4. 로딩 메시지 출력 및 세션에 저장
+            const loadingMsg = {type: 'system_response', text: '...Processing...'};
+            currentSession.conversation.push(loadingMsg);
+            let loadingElement = appendMessage(loadingMsg);
 
             try {
+                // 🚩 실제 /api/send_command 호출 로직 (FormData 사용)
                 const response = await fetch('/api/send_command', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ command: command })
+                    // FormData를 사용할 때는 Content-Type 헤더를 수동으로 설정하면 안 됩니다.
+                    body: formData 
                 });
 
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    appendMessage(`✅ SUCCESS: ${data.message}`);
-                    if (data.output) {
-                        appendMessage(data.output);
+                if (!response.ok) {
+                    let errorDetails = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorBody = await response.json();
+                        errorDetails += `. Message: ${errorBody.message || ''}`;
+                    } catch (e) {
+                        errorDetails += `. Server responded with non-JSON body.`;
                     }
-                } else {
-                    appendMessage(`❌ ERROR: ${data.message}`);
-                    if (data.output) {
-                        appendMessage(data.output);
-                    }
+                    throw new Error(errorDetails);
                 }
+
+                const data = await response.json();
+
+                // 5. 로딩 메시지 제거
+                loadingElement.remove();
+                currentSession.conversation.pop();
+                
+                // 6. 응답 조합 및 출력/저장
+                let fullResponse = data.message || (data.output ? "API call successful." : "No message provided.");
+                if (data.output) {
+                    fullResponse += "\n\n" + data.output;
+                }
+
+                let responseText = (data.status === 'success' ? '✅ SUCCESS: ' : '❌ ERROR: ') + fullResponse;
+
+                const responseMsg = {type: 'system_response', text: responseText};
+                currentSession.conversation.push(responseMsg);
+                appendMessage(responseMsg);
+
+                // 첫 응답 후 세션 제목 업데이트
+                if (currentSession.title === 'New Chat') {
+                    currentSession.title = (command || file.name).substring(0, 30) + ((command || file.name).length > 30 ? '...' : '');
+                    updateHistorySidebar();
+                }
+                
+                // 7. 성공 후 파일 입력 초기화
+                imageUpload.value = '';
+                fileNameDisplay.textContent = 'No file selected.';
+
+
             } catch (error) {
-                appendMessage(`❌ ERROR: Failed to connect to server.`);
+                // 5. 로딩 메시지 제거 및 에러 응답 출력/저장
+                loadingElement.remove();
+                currentSession.conversation.pop();
+
+                const errorMsg = {type: 'system_response', text: `❌ ERROR: Failed to process command or connect to server. Details: ${error.message || 'Unknown error'}`};
+                currentSession.conversation.push(errorMsg);
+                appendMessage(errorMsg);
             }
         }
 
-        sendButton.addEventListener('click', sendCommand);
-        input.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                sendCommand();
+        // --- Event Listeners ---
+        // 🚩 파일 이름 표시 리스너 추가
+        imageUpload.addEventListener('change', () => {
+            if (imageUpload.files.length > 0) {
+                fileNameDisplay.textContent = imageUpload.files[0].name;
+            } else {
+                fileNameDisplay.textContent = 'No file selected.';
             }
         });
+        
+        sendButton.addEventListener('click', sendCommand);
+        newChatButton.addEventListener('click', startNewChat);
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendCommand();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (commandIndex > 0) {
+                    commandIndex--;
+                    input.value = currentCommands[commandIndex];
+                }
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (commandIndex < currentCommands.length) {
+                    commandIndex++;
+                    input.value = commandIndex === currentCommands.length ? '' : currentCommands[commandIndex];
+                }
+            }
+        });
+
+        // 페이지 로드 시 초기화
+        startNewChat();
     </script>
 </body>
 </html>
