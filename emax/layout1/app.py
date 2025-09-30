@@ -274,4 +274,5 @@ def handle_command():
 if __name__ == '__main__':
     # 디버그 모드로 Flask 앱 실행
     # 터미널에서 'python app.py'로 실행 가능
-    app.run(debug=True)
+    # 이 호스트 API는 5000번 포트에서 실행됩니다.
+    app.run(host='0.0.0.0', port=7090, debug=True)
