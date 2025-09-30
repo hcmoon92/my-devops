@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Web CLI Client - Full Overlay Sidebar (Image Upload)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web CLI Client - Mobile Responsive</title>
     <style>
         /* Global Setup */
         body {
@@ -30,7 +31,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
-        /* --- Main Content Right Pane Styles --- */
+        /* --- Main Content Right Pane Styles (Desktop) --- */
         .main-content {
             flex-grow: 1;
             display: flex;
@@ -38,7 +39,7 @@
             z-index: 5;
         }
 
-        /* --- History Left Pane Styles (Overlay/Absolute Position) --- */
+        /* --- History Left Pane Styles (Desktop Overlay/Absolute Position) --- */
         .history-sidebar {
             position: absolute;
             top: 0;
@@ -49,18 +50,28 @@
             background-color: #f7f7fa;
             padding: 10px 0;
             overflow: hidden;
+            /* 데스크톱: 기본적으로 왼쪽으로 숨김 */
             transform: translateX(-100px);
             transition: transform 0.3s ease-in-out;
             z-index: 10;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
         }
 
+        /* 데스크톱: cli-wrapper에 호버 시 사이드바 전체 노출 */
         .cli-wrapper:hover .history-sidebar {
             transform: translateX(0);
             overflow-y: auto;
         }
-
-        /* --- Sidebar Internal Styles --- */
+        
+        /* 호버 시에만 보이게 했던 요소들은 데스크톱 호버 상태에서만 보이도록 유지 */
+        #new-chat-button, .history-list {
+            opacity: 0;
+            transition: opacity 0.3s 0.1s;
+        }
+        .cli-wrapper:hover #new-chat-button { opacity: 1; }
+        .cli-wrapper:hover .history-list { opacity: 1; }
+        
+        /* 사이드바 내부 스타일 (데스크톱/모바일 공통) */
         .sidebar-header {
             padding: 10px 20px;
             font-size: 1.1em;
@@ -82,21 +93,15 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s 0.1s;
         }
-        .cli-wrapper:hover #new-chat-button { opacity: 1; }
 
         .history-list {
             list-style: none;
             padding: 10px 10px;
             margin: 0;
             white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s 0.1s;
         }
-        .cli-wrapper:hover .history-list { opacity: 1; }
-
+        
         .history-list li {
             padding: 10px 15px;
             margin-bottom: 5px;
@@ -141,7 +146,7 @@
         }
         .input-area {
             display: flex;
-            flex-direction: column; /* 텍스트 입력과 파일 입력 분리 */
+            flex-direction: column;
             padding: 20px;
             flex-shrink: 0;
             justify-content: center;
@@ -149,7 +154,6 @@
             background-color: #ffffff;
         }
         
-        /* New Style for Image Upload Area */
         .file-upload-area {
             display: flex;
             width: 100%;
@@ -161,7 +165,7 @@
         }
         
         #image-upload {
-            display: none; /* 실제 파일 입력 필드는 숨깁니다 */
+            display: none;
         }
         
         .upload-label {
@@ -185,11 +189,10 @@
             color: #777;
         }
 
-        /* Existing Style for Command Input */
         .input-container {
             display: flex;
             width: 100%;
-            max-width: 800px;
+            max-width: 800px; /* 데스크톱 최대 너비 */
             margin: 0 auto;
             background-color: #ffffff;
             border: 1px solid #cccccc;
@@ -216,10 +219,98 @@
             transition: background-color 0.2s;
         }
         .input-container button:hover { background-color: #0056b3; }
+
+        /* 🚩 모바일 토글 버튼 스타일 (데스크톱에선 숨김) */
+        #mobile-sidebar-toggle {
+            display: none; /* 기본적으로 숨김 */
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 15;
+            font-size: 1.1em;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* ------------------------------------- */
+        /* 🚩 모바일 반응형 미디어 쿼리 */
+        /* ------------------------------------- */
+        @media (max-width: 768px) {
+            
+            /* 모바일에서 히스토리 토글 버튼 표시 */
+            #mobile-sidebar-toggle {
+                display: block;
+            }
+
+            /* 메인 콘텐츠 (채팅 창) */
+            .main-content {
+                /* 모바일 토글 버튼 공간 확보 */
+                padding-top: 50px; 
+            }
+            
+            /* 입력 영역 */
+            .input-area {
+                padding: 10px;
+            }
+            .input-container, .file-upload-area {
+                max-width: 100%; /* 너비 100% 사용 */
+                margin-left: 0;
+                margin-right: 0;
+            }
+            .output {
+                padding: 10px 20px;
+            }
+            .output-item {
+                width: 100%;
+                max-width: none; /* 최대 너비 제한 해제 */
+            }
+
+            /* 히스토리 사이드바 (모바일 레이아웃) */
+            .history-sidebar {
+                top: auto; /* 상단 고정 해제 */
+                bottom: 0; /* 하단에 위치 */
+                left: 0;
+                width: 100%; /* 전체 너비 */
+                height: 300px; /* 고정 높이 또는 원하는 높이 */
+                min-width: 100%;
+                padding: 0;
+                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                
+                /* 기본적으로 화면 아래로 완전히 숨김 */
+                transform: translateY(100%); 
+                transition: transform 0.3s ease-in-out;
+                
+                /* 모바일에서는 히스토리 목록 스크롤 가능하게 */
+                overflow-y: hidden; /* 전체 사이드바 스크롤은 JS가 open 클래스를 부여한 후 처리 */
+            }
+
+            /* 모바일에서 .history-sidebar.open 클래스가 붙었을 때 노출 */
+            .history-sidebar.open {
+                transform: translateY(0);
+                overflow-y: auto; /* 열렸을 때 스크롤 허용 */
+            }
+            
+            /* 모바일에서는 호버 기능 제거 */
+            .cli-wrapper:hover .history-sidebar {
+                transform: translateY(100%); /* 기본 상태 유지 */
+            }
+
+            /* 모바일에서는 버튼과 목록이 항상 보이도록 재정의 (JS 토글 버튼이 대신함) */
+            #new-chat-button, .history-list {
+                opacity: 1; 
+            }
+        }
     </style>
 </head>
 <body>
     <div class="cli-wrapper">
+
+        <button id="mobile-sidebar-toggle">☰ History</button>
 
         <div class="main-content">
             <div id="output" class="output">
@@ -255,12 +346,14 @@
         const sendButton = document.getElementById('send-button');
         const newChatButton = document.getElementById('new-chat-button');
         const historyList = document.getElementById('history-list');
-        // 🚩 추가된 요소
         const imageUpload = document.getElementById('image-upload');
         const fileNameDisplay = document.getElementById('file-name-display');
+        // 🚩 모바일 요소 추가
+        const historySidebar = document.getElementById('history-sidebar');
+        const mobileToggle = document.getElementById('mobile-sidebar-toggle');
 
 
-        // { id: number, title: string, commands: string[], conversation: {type: 'user'/'system', text: string}[] }
+        // { id: number, title: string, commands: string[], conversation: {type: 'user'/'system'/'system_welcome', text: string, file: string|null}[] }
         const allSessions = [];
         let currentSessionId = 0;
         let currentCommands = [];
@@ -283,7 +376,8 @@
                 if (item.file) {
                     fileInfo = `<span style="font-style: italic; color: #6c757d;"> (File: ${item.file})</span>`;
                 }
-                outputItem.innerHTML = `<div><span class="user-input">&gt; ${item.text}</span>${fileInfo}</div>`;
+                const userText = item.text || '(File Upload)';
+                outputItem.innerHTML = `<div><span class="user-input">&gt; ${userText}</span>${fileInfo}</div>`;
             } else {
                 const responseBlock = document.createElement('div');
                 responseBlock.className = 'system-response';
@@ -323,6 +417,11 @@
 
                 li.addEventListener('click', () => {
                     loadSession(session.id);
+                    // 🚩 모바일에서 세션 로드 시 사이드바 닫기
+                    if (window.innerWidth <= 768) {
+                        historySidebar.classList.remove('open');
+                        mobileToggle.textContent = '☰ History';
+                    }
                 });
 
                 historyList.appendChild(li);
@@ -352,7 +451,6 @@
             const activeLi = document.querySelector(`[data-session-id="${sessionId}"]`);
             if(activeLi) activeLi.classList.add('active');
             
-            // 🚩 세션 로드 시 파일 입력 초기화
             imageUpload.value = '';
             fileNameDisplay.textContent = 'No file selected.';
         }
@@ -366,7 +464,8 @@
                 if (sessionToUpdate && sessionToUpdate.title === 'New Chat') {
                     const firstUserCommand = sessionToUpdate.conversation.find(item => item.type === 'user');
                     if(firstUserCommand) {
-                        sessionToUpdate.title = firstUserCommand.text.substring(0, 30) + (firstUserCommand.text.length > 30 ? '...' : '');
+                        const titleText = firstUserCommand.text !== '(File Upload)' ? firstUserCommand.text : firstUserCommand.file;
+                        sessionToUpdate.title = titleText.substring(0, 30) + (titleText.length > 30 ? '...' : '');
                     }
                 }
             }
@@ -385,16 +484,21 @@
 
             outputDiv.innerHTML = '';
             input.value = '';
-            const welcomeMsg = {type: 'system_welcome', text: 'Welcome to the new chat session. Type your first command. You can also attach an image.'};
+            const welcomeMsg = {type: 'system_welcome', text: 'Welcome to the new chat session. Type your first command. You can also attach an image.', file: null};
             newSession.conversation.push(welcomeMsg);
             appendMessage(welcomeMsg);
 
             updateHistorySidebar();
             input.focus();
             
-            // 🚩 새 채팅 시작 시 파일 입력 초기화
             imageUpload.value = '';
             fileNameDisplay.textContent = 'No file selected.';
+
+            // 🚩 새 채팅 시작 시 모바일 사이드바 닫기
+            if (window.innerWidth <= 768) {
+                historySidebar.classList.remove('open');
+                mobileToggle.textContent = '☰ History';
+            }
         }
 
         async function sendCommand() {
@@ -408,13 +512,13 @@
             if (!currentSession) return;
 
             // 1. 명령어 히스토리에 추가
-            const commandForHistory = command + (file ? ` [File: ${file.name}]` : '');
+            const commandForHistory = (command || '(File Upload)') + (file ? ` [File: ${file.name}]` : '');
             currentCommands.push(commandForHistory);
             commandIndex = currentCommands.length;
 
             // 2. 사용자 입력 출력 및 세션에 저장
             input.value = '';
-            const userMsg = {type: 'user', text: command || '(File Upload)', file: file ? file.name : null};
+            const userMsg = {type: 'user', text: command, file: file ? file.name : null};
             currentSession.conversation.push(userMsg);
             appendMessage(userMsg);
             
@@ -463,13 +567,14 @@
 
                 let responseText = (data.status === 'success' ? '✅ SUCCESS: ' : '❌ ERROR: ') + fullResponse;
 
-                const responseMsg = {type: 'system_response', text: responseText};
+                const responseMsg = {type: 'system_response', text: responseText, file: null};
                 currentSession.conversation.push(responseMsg);
                 appendMessage(responseMsg);
 
                 // 첫 응답 후 세션 제목 업데이트
                 if (currentSession.title === 'New Chat') {
-                    currentSession.title = (command || file.name).substring(0, 30) + ((command || file.name).length > 30 ? '...' : '');
+                    const titleSource = command || file.name;
+                    currentSession.title = titleSource.substring(0, 30) + (titleSource.length > 30 ? '...' : '');
                     updateHistorySidebar();
                 }
                 
@@ -490,7 +595,12 @@
         }
 
         // --- Event Listeners ---
-        // 🚩 파일 이름 표시 리스너 추가
+        // 🚩 모바일 토글 이벤트 리스너 추가
+        mobileToggle.addEventListener('click', () => {
+            historySidebar.classList.toggle('open');
+            mobileToggle.textContent = historySidebar.classList.contains('open') ? '✕ Close' : '☰ History';
+        });
+
         imageUpload.addEventListener('change', () => {
             if (imageUpload.files.length > 0) {
                 fileNameDisplay.textContent = imageUpload.files[0].name;
