@@ -31,7 +31,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
-        /* --- Main Content Right Pane Styles (Desktop) --- */
+        /* --- Main Content Right Pane Styles (Desktop/Mobile) --- */
         .main-content {
             flex-grow: 1;
             display: flex;
@@ -39,7 +39,7 @@
             z-index: 5;
         }
 
-        /* --- History Left Pane Styles (Desktop Overlay/Absolute Position) --- */
+        /* --- History Left Pane Styles (Base: Desktop Hidden State) --- */
         .history-sidebar {
             position: absolute;
             top: 0;
@@ -50,8 +50,8 @@
             background-color: #f7f7fa;
             padding: 10px 0;
             overflow: hidden;
-            /* 데스크톱: 기본적으로 왼쪽으로 숨김 */
-            transform: translateX(-100px);
+            /* 데스크톱/모바일 통일: 왼쪽으로 완전히 숨김 */
+            transform: translateX(-100%); 
             transition: transform 0.3s ease-in-out;
             z-index: 10;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -63,7 +63,7 @@
             overflow-y: auto;
         }
         
-        /* 호버 시에만 보이게 했던 요소들은 데스크톱 호버 상태에서만 보이도록 유지 */
+        /* 호버 시에만 보이게 했던 요소들 */
         #new-chat-button, .history-list {
             opacity: 0;
             transition: opacity 0.3s 0.1s;
@@ -71,7 +71,7 @@
         .cli-wrapper:hover #new-chat-button { opacity: 1; }
         .cli-wrapper:hover .history-list { opacity: 1; }
         
-        /* 사이드바 내부 스타일 (데스크톱/모바일 공통) */
+        /* --- Sidebar Internal Styles (Common) --- */
         .sidebar-header {
             padding: 10px 20px;
             font-size: 1.1em;
@@ -116,7 +116,7 @@
         .history-list li:hover { background-color: #e8e8f0; color: #333333; }
         .history-list li.active { background-color: #e0e0e0; font-weight: 600; color: #333333; }
 
-        /* --- Main Content Internal Styles --- */
+        /* --- Main Content Internal Styles (Common) --- */
         .output {
             flex-grow: 1;
             padding: 20px 40px;
@@ -164,9 +164,7 @@
             padding: 5px 0;
         }
         
-        #image-upload {
-            display: none;
-        }
+        #image-upload { display: none; }
         
         .upload-label {
             display: inline-block;
@@ -180,9 +178,7 @@
             margin-right: 10px;
             transition: background-color 0.2s;
         }
-        .upload-label:hover {
-            background-color: #e0e0e0;
-        }
+        .upload-label:hover { background-color: #e0e0e0; }
         
         #file-name-display {
             font-size: 0.9em;
@@ -192,7 +188,7 @@
         .input-container {
             display: flex;
             width: 100%;
-            max-width: 800px; /* 데스크톱 최대 너비 */
+            max-width: 800px; 
             margin: 0 auto;
             background-color: #ffffff;
             border: 1px solid #cccccc;
@@ -222,7 +218,7 @@
 
         /* 🚩 모바일 토글 버튼 스타일 (데스크톱에선 숨김) */
         #mobile-sidebar-toggle {
-            display: none; /* 기본적으로 숨김 */
+            display: none; 
             position: absolute;
             top: 10px;
             left: 10px;
@@ -238,7 +234,7 @@
         }
         
         /* ------------------------------------- */
-        /* 🚩 모바일 반응형 미디어 쿼리 */
+        /* 🚩 모바일 반응형 미디어 쿼리 (왼쪽 슬라이드) */
         /* ------------------------------------- */
         @media (max-width: 768px) {
             
@@ -253,12 +249,12 @@
                 padding-top: 50px; 
             }
             
-            /* 입력 영역 */
+            /* 입력 영역 너비 조정 */
             .input-area {
                 padding: 10px;
             }
             .input-container, .file-upload-area {
-                max-width: 100%; /* 너비 100% 사용 */
+                max-width: 100%; 
                 margin-left: 0;
                 margin-right: 0;
             }
@@ -266,41 +262,40 @@
                 padding: 10px 20px;
             }
             .output-item {
-                width: 100%;
-                max-width: none; /* 최대 너비 제한 해제 */
+                max-width: none;
             }
 
-            /* 히스토리 사이드바 (모바일 레이아웃) */
+            /* 🚩 히스토리 사이드바 (모바일 왼쪽 오버레이) */
             .history-sidebar {
-                top: auto; /* 상단 고정 해제 */
-                bottom: 0; /* 하단에 위치 */
+                top: 0; 
+                bottom: 0;
                 left: 0;
-                width: 100%; /* 전체 너비 */
-                height: 300px; /* 고정 높이 또는 원하는 높이 */
-                min-width: 100%;
+                width: 250px; /* 원하는 너비 설정 */
+                height: 100%; /* 전체 높이 사용 */
+                min-width: 250px;
                 padding: 0;
-                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                box-shadow: 4px 0 5px rgba(0, 0, 0, 0.1);
                 
-                /* 기본적으로 화면 아래로 완전히 숨김 */
-                transform: translateY(100%); 
+                /* 왼쪽으로 완전히 숨김 */
+                transform: translateX(-100%); 
                 transition: transform 0.3s ease-in-out;
                 
-                /* 모바일에서는 히스토리 목록 스크롤 가능하게 */
-                overflow-y: hidden; /* 전체 사이드바 스크롤은 JS가 open 클래스를 부여한 후 처리 */
+                /* 열렸을 때 스크롤 가능하게 */
+                overflow-y: auto; 
             }
 
             /* 모바일에서 .history-sidebar.open 클래스가 붙었을 때 노출 */
             .history-sidebar.open {
-                transform: translateY(0);
-                overflow-y: auto; /* 열렸을 때 스크롤 허용 */
+                transform: translateX(0);
             }
             
-            /* 모바일에서는 호버 기능 제거 */
+            /* 모바일에서는 호버 기능 제거 (JS 토글 기능만 사용) */
             .cli-wrapper:hover .history-sidebar {
-                transform: translateY(100%); /* 기본 상태 유지 */
+                /* 데스크톱 호버 상태를 무시하고 기본 상태(숨김) 유지 */
+                transform: translateX(-100%); 
             }
 
-            /* 모바일에서는 버튼과 목록이 항상 보이도록 재정의 (JS 토글 버튼이 대신함) */
+            /* 모바일에서는 버튼과 목록이 항상 보이도록 재정의 */
             #new-chat-button, .history-list {
                 opacity: 1; 
             }
